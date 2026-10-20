@@ -7,4 +7,5 @@ createApp(App, {
     authenticated: mountElement.dataset.authenticated === 'true',
     userName: mountElement.dataset.userName ?? '',
     csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+    celestialBodies: JSON.parse(mountElement.dataset.celestialBodies),
 }).mount(mountElement);

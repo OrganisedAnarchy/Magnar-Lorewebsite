@@ -4,21 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $mode === 'register' ? 'Create an account' : 'Sign in' }} · {{ config('app.name', 'Magnar Lore') }}</title>
+    <title>{{ $mode === 'register' ? 'Create an account' : 'Sign in' }} · {{ config('app.name', 'The World of Magnar') }}</title>
     @vite(['resources/scss/app.scss'])
 </head>
 <body>
     <main class="auth-page">
         <section class="auth-card" aria-labelledby="auth-title">
-            <a class="auth-brand wordmark" href="/" aria-label="Magnar Lore home">
+            <a class="auth-brand wordmark" href="/" aria-label="The World of Magnar home">
                 <span class="wordmark-mark" aria-hidden="true">M</span>
-                <span>MAGNAR <span class="wordmark-light">LORE</span></span>
+                <span>THE WORLD OF <span class="wordmark-light">MAGNAR</span></span>
             </a>
 
             <header class="auth-heading">
                 <p class="eyebrow"><span class="eyebrow-line"></span> Your story awaits <span class="eyebrow-line"></span></p>
                 <h1 id="auth-title">{{ $mode === 'register' ? 'Create your account' : 'Welcome back' }}</h1>
-                <p>{{ $mode === 'register' ? 'Start gathering the pieces of your world.' : 'Step back into the worlds you imagine.' }}</p>
+                <p>{{ $mode === 'register' ? 'Create your player account and start building a character.' : 'Sign in to pick up where your character’s story left off.' }}</p>
             </header>
 
             @if ($errors->any())
@@ -78,7 +78,7 @@
                 @if ($mode === 'register')
                     Already have an account? <a href="{{ route('login') }}">Sign in</a>
                 @else
-                    New to Magnar Lore? <a href="{{ route('register') }}">Create an account</a>
+                    New here? <a href="{{ route('register') }}">Create an account</a>
                 @endif
             </p>
             <a class="auth-back" href="/">← Back to the welcome page</a>

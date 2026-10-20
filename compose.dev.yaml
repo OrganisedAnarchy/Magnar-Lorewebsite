@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      args:
+        INSTALL_DEV_DEPENDENCIES: "true"
+    volumes:
+      - ./app:/var/www/html/app
+      - ./bootstrap:/var/www/html/bootstrap
+      - ./config:/var/www/html/config
+      - ./database:/var/www/html/database
+      - ./public:/var/www/html/public
+      - ./resources:/var/www/html/resources
+      - ./routes:/var/www/html/routes
+      - ./tests:/var/www/html/tests
+
+  vite:
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app
+      - vite-node-modules:/app/node_modules
+    restart: unless-stopped
+
+volumes:
+  vite-node-modules:

@@ -24,7 +24,12 @@ COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.con
 WORKDIR /var/www/html
 
 COPY . .
-RUN composer install --no-dev --no-interaction --optimize-autoloader \
+ARG INSTALL_DEV_DEPENDENCIES=false
+RUN if [ "$INSTALL_DEV_DEPENDENCIES" = "true" ]; then \
+        composer install --no-interaction --optimize-autoloader; \
+    else \
+        composer install --no-dev --no-interaction --optimize-autoloader; \
+    fi \
     && chown -R www-data:www-data storage bootstrap/cache
 
 COPY --from=frontend /app/public/build ./public/build
