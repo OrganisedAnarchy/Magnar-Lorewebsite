@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     authenticated: {
@@ -20,142 +20,63 @@ const props = defineProps({
     },
 });
 
-const BRIGHT_SUN_PERIOD = 34;
-const DIM_SUN_PERIOD = 57;
-const MOON_PERIODS = [15, 21, 29];
-const HELIA_PERIOD = 12;
 const PLANET_ORBITS = [
-    { slug: 'ogunja', period: 38, radius: 38, heliaOrbitRadius: 6.5 },
-    { slug: 'amial', period: 39, radius: 44, heliaOrbitRadius: 6.5 },
-    { slug: 'hanar', period: 40, radius: 50, heliaOrbitRadius: 6.5 },
-    { slug: 'misana', period: 41, radius: 56, heliaOrbitRadius: 6.5 },
-    { slug: 'lysus', period: 64, radius: 62 },
+    { slug: 'ogunja', radius: 35, duration: 34 },
+    { slug: 'amial', radius: 40.5, duration: 42 },
+    { slug: 'hanar', radius: 46, duration: 50 },
+    { slug: 'misana', radius: 51.5, duration: 58 },
+    { slug: 'lysus', radius: 60.5, duration: 66 },
 ];
-const HELIA_STATIONS = [
-    { slug: 'magnar', orbitRadius: 32 },
-    ...PLANET_ORBITS.slice(0, 4).map(({ slug, heliaOrbitRadius }) => ({
-        slug,
-        orbitRadius: heliaOrbitRadius,
-    })),
-];
-const SEASONS = [
-    { name: 'Summer', cycle: 1 },
-    { name: 'Spring', cycle: 1 },
-    { name: 'Autumn', cycle: 1 },
-    { name: 'Winter', cycle: 1 },
-    { name: 'Winter', cycle: 2 },
-    { name: 'Autumn', cycle: 2 },
-    { name: 'Spring', cycle: 2 },
-    { name: 'Summer', cycle: 2 },
-];
-const SYNODIC_CYCLE_SECONDS = 1 / (1 / BRIGHT_SUN_PERIOD - 1 / DIM_SUN_PERIOD);
 const randomAngle = () => Math.random() * 360;
-const wrapAngle = (angle) => (angle % 360 + 360) % 360;
-const initialYearPosition = Math.random() * 2;
 const brightSunStart = randomAngle();
-const moonStarts = MOON_PERIODS.map(() => randomAngle());
-const planetaryOrigin = randomAngle();
-const planetStartOffsets = [0, 72, 144, 216, 288].map((offset) => offset + (Math.random() - 0.5) * 24);
-const planetStarts = PLANET_ORBITS.map((_, index) => wrapAngle(planetaryOrigin + planetStartOffsets[index]));
-
-const yearPosition = ref(initialYearPosition);
-const elapsedSeconds = ref(0);
-const simulationPaused = ref(false);
-const seasonIndex = computed(() => Math.floor(yearPosition.value * 4));
-const season = computed(() => SEASONS[seasonIndex.value]);
-const isAutumn = computed(() => season.value.name === 'Autumn');
-const isSecondCycle = computed(() => yearPosition.value >= 1);
-const mweziPhase = computed(() => Math.floor((yearPosition.value % 1) * 8));
-const ambrossIsHalf = computed(() => yearPosition.value % 1 >= 0.5);
-const activeHeliaIndex = computed(() => Math.min(
-    Math.floor((yearPosition.value % 1) * HELIA_STATIONS.length),
-    HELIA_STATIONS.length - 1,
-));
-const planetAngles = computed(() => PLANET_ORBITS.map((planet, index) => (
-    (planetStarts[index] + elapsedSeconds.value * 360 / planet.period) % 360
-)));
+const moonStarts = [randomAngle(), randomAngle(), randomAngle()];
+const mweziPhase = Math.floor(Math.random() * 8);
+const ambrossIsHalf = Math.random() >= 0.5;
+const planetStarts = PLANET_ORBITS.map(() => randomAngle());
+const heliaPlanetIndex = Math.floor(Math.random() * (PLANET_ORBITS.length - 1));
+const heliaAngle = randomAngle();
+const isPaused = ref(false);
 const planets = computed(() => PLANET_ORBITS.map((planet, index) => ({
     ...props.celestialBodies[planet.slug],
     ...planet,
-    start: planetStarts[index],
-    angle: planetAngles.value[index],
+    angle: planetStarts[index],
+    x: 50 + Math.sin(planetStarts[index] * Math.PI / 180) * planet.radius,
+    y: 50 - Math.cos(planetStarts[index] * Math.PI / 180) * planet.radius,
 })));
-const planetPositions = computed(() => Object.fromEntries(
-    PLANET_ORBITS.map((planet, index) => {
-        const angle = planetAngles.value[index] * Math.PI / 180;
+const heliaPlanet = computed(() => planets.value[heliaPlanetIndex]);
+const heliaPosition = computed(() => {
+    const angle = heliaAngle * Math.PI / 180;
 
-        return [planet.slug, {
-            x: 50 + Math.sin(angle) * planet.radius,
-            y: 50 - Math.cos(angle) * planet.radius,
-        }];
-    }),
-));
-const heliaAgents = computed(() => {
-    const stations = isSecondCycle.value ? [...HELIA_STATIONS].reverse() : HELIA_STATIONS;
-    const heliaOrbitAngle = elapsedSeconds.value * 360 / HELIA_PERIOD;
-
-    return stations.map((station, index) => {
-        const center = station.slug === 'magnar'
-            ? { x: 50, y: 50 }
-            : planetPositions.value[station.slug];
-        const planetIndex = Math.max(0, PLANET_ORBITS.findIndex(({ slug }) => slug === station.slug));
-        const angle = (planetAngles.value[planetIndex] + heliaOrbitAngle) * Math.PI / 180;
-
-        return {
-            ...station,
-            index,
-            centerX: center.x,
-            centerY: center.y,
-            x: center.x + Math.sin(angle) * station.orbitRadius,
-            y: center.y - Math.cos(angle) * station.orbitRadius,
-        };
-    });
-});
-const activeHeliaAgent = computed(() => heliaAgents.value[activeHeliaIndex.value]);
-const heliaRoute = computed(() => {
-    const agent = activeHeliaAgent.value;
-
-    return [{
-        ...agent,
-        x: agent.centerX,
-        y: agent.centerY,
-        innerRadius: agent.orbitRadius - 1.5,
-        outerRadius: agent.orbitRadius + 1.5,
-    }];
+    return {
+        x: heliaPlanet.value.x + Math.sin(angle) * 8,
+        y: heliaPlanet.value.y - Math.cos(angle) * 8,
+    };
 });
 const hoveredBodySlug = ref(null);
 const activeBody = computed(() => props.celestialBodies[hoveredBodySlug.value] ?? null);
 const heliaBrightness = computed(() => {
-    const brightAngle = (brightSunStart + elapsedSeconds.value * 360 / BRIGHT_SUN_PERIOD) * Math.PI / 180;
+    const brightAngle = brightSunStart * Math.PI / 180;
     const eluminorPosition = {
         x: 50 + Math.sin(brightAngle) * 29,
         y: 50 - Math.cos(brightAngle) * 29,
     };
-    const distance = Math.hypot(eluminorPosition.x - activeHeliaAgent.value.x, eluminorPosition.y - activeHeliaAgent.value.y);
+    const distance = Math.hypot(eluminorPosition.x - heliaPosition.value.x, eluminorPosition.y - heliaPosition.value.y);
     const proximity = Math.max(0, 1 - distance / 78);
 
     return (0.7 + proximity * 0.7).toFixed(2);
 });
 
-let animationFrame;
-let motionReduced = false;
-let lastFrameAt;
-
-function orbitStyle(startAngle, period) {
+function orbitStyle(startAngle, duration) {
     return {
-        '--orbit-duration': `${period}s`,
-        '--orbit-delay': `${-(period * startAngle) / 360}s`,
+        '--orbit-angle': `${startAngle}deg`,
+        '--orbit-duration': `${duration}s`,
     };
 }
 
-function planetOrbitStyle(angle) {
-    return { '--planet-angle': `${angle}deg` };
-}
-
-function heliaAgentStyle(agent) {
+function heliaOrbitStyle() {
     return {
-        '--helia-position-x': `${agent.x}%`,
-        '--helia-position-y': `${agent.y}%`,
+        '--orbit-angle': `${heliaAngle}deg`,
+        '--orbit-duration': '20s',
     };
 }
 
@@ -171,49 +92,6 @@ function hideBody() {
     hoveredBodySlug.value = null;
 }
 
-function toggleSimulation() {
-    simulationPaused.value = !simulationPaused.value;
-
-    if (motionReduced) {
-        return;
-    }
-
-    if (simulationPaused.value) {
-        window.cancelAnimationFrame(animationFrame);
-        animationFrame = undefined;
-
-        return;
-    }
-
-    lastFrameAt = undefined;
-    animationFrame = window.requestAnimationFrame(updateYear);
-}
-
-function updateYear(now) {
-    if (lastFrameAt !== undefined) {
-        elapsedSeconds.value += (now - lastFrameAt) / 1000;
-        yearPosition.value = (initialYearPosition + elapsedSeconds.value / SYNODIC_CYCLE_SECONDS) % 2;
-    }
-
-    lastFrameAt = now;
-    animationFrame = window.requestAnimationFrame(updateYear);
-}
-
-onMounted(() => {
-    motionReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (motionReduced) {
-        return;
-    }
-
-    animationFrame = window.requestAnimationFrame(updateYear);
-});
-
-onUnmounted(() => {
-    if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-    }
-});
 </script>
 
 <template>
@@ -257,24 +135,13 @@ onUnmounted(() => {
 
             <div
                 class="hero-art"
-                :class="{ 'simulation-paused': simulationPaused }"
+                :class="{ 'is-paused': isPaused }"
                 role="group"
-                aria-label="Geocentric model of Magnar, its moons, suns, and five neighboring planets"
+                aria-label="Moving celestial chart of Magnar, its moons, suns, and five neighboring planets"
             >
-                <button
-                    class="simulation-toggle"
-                    type="button"
-                    :aria-pressed="simulationPaused"
-                    :aria-label="simulationPaused ? 'Resume celestial simulation' : 'Pause celestial simulation'"
-                    @click="toggleSimulation"
-                >
-                    <span aria-hidden="true">{{ simulationPaused ? '▶' : 'Ⅱ' }}</span>
-                    {{ simulationPaused ? 'Resume' : 'Pause' }}
-                </button>
                 <div
                     class="orbit-path moon-orbit moon-orbit-one"
-                    :style="orbitStyle(moonStarts[0], MOON_PERIODS[0])"
-                    :class="{ 'moon-disappears': isSecondCycle }"
+                    :style="orbitStyle(moonStarts[0], 10)"
                 >
                     <a
                         class="orbital-link moon-link mwezi-link"
@@ -293,7 +160,7 @@ onUnmounted(() => {
                 </div>
                 <div
                     class="orbit-path moon-orbit moon-orbit-two"
-                    :style="orbitStyle(moonStarts[1], MOON_PERIODS[1])"
+                    :style="orbitStyle(moonStarts[1], 16)"
                 >
                     <a
                         class="orbital-link moon-link ambross-link"
@@ -304,7 +171,7 @@ onUnmounted(() => {
                         @focus="showBody('ambross')"
                         @blur="hideBody"
                     >
-                        <span class="moon moon-ambross" :class="{ 'is-half': ambrossIsHalf, 'is-autumn': isAutumn }">
+                        <span class="moon moon-ambross" :class="{ 'is-half': ambrossIsHalf }">
                             <span class="moon-shadow"></span>
                         </span>
                         <span class="orbit-label moon-label ambross-label">{{ celestialBodies.ambross.name }}</span>
@@ -312,7 +179,7 @@ onUnmounted(() => {
                 </div>
                 <div
                     class="orbit-path moon-orbit moon-orbit-three"
-                    :style="orbitStyle(moonStarts[2], MOON_PERIODS[2])"
+                    :style="orbitStyle(moonStarts[2], 27)"
                 >
                     <span class="aegis-wanderer">
                         <a
@@ -331,7 +198,7 @@ onUnmounted(() => {
                 </div>
                 <div
                     class="orbit-path sun-orbit sun-orbit-large"
-                    :style="orbitStyle(brightSunStart, BRIGHT_SUN_PERIOD)"
+                    :style="orbitStyle(brightSunStart, 46)"
                 >
                     <a
                         class="orbital-link sun-link eluminor-link"
@@ -346,66 +213,54 @@ onUnmounted(() => {
                         <span class="orbit-label sun-label">{{ celestialBodies.eluminor.name }}</span>
                     </a>
                 </div>
-                <svg class="helia-route" viewBox="0 0 100 100" aria-hidden="true">
-                    <template v-for="agent in heliaRoute" :key="agent.slug">
-                        <circle
-                            class="helia-route-strand helia-route-strand-one"
-                            :cx="agent.x"
-                            :cy="agent.y"
-                            :r="agent.innerRadius"
-                        ></circle>
-                        <circle
-                            class="helia-route-strand helia-route-strand-two"
-                            :cx="agent.x"
-                            :cy="agent.y"
-                            :r="agent.outerRadius"
-                        ></circle>
-                    </template>
-                </svg>
-                <span
-                    v-for="agent in heliaAgents"
-                    :key="agent.slug"
-                    class="helia-agent"
-                    :class="{ 'helia-agent-active': agent.index === activeHeliaIndex }"
-                    :style="heliaAgentStyle(agent)"
-                    :aria-hidden="agent.index !== activeHeliaIndex"
-                    :inert="agent.index !== activeHeliaIndex"
+                <button
+                    class="orbit-toggle"
+                    type="button"
+                    :aria-pressed="isPaused"
+                    @click="isPaused = !isPaused"
                 >
-                    <a
-                        v-if="agent.index === activeHeliaIndex"
-                        class="orbital-link sun-link helia-link"
-                        :href="bodyUrl(celestialBodies.helia.slug)"
-                        :aria-label="`${celestialBodies.helia.name}: ${celestialBodies.helia.summary}`"
-                        @mouseenter="showBody('helia')"
-                        @mouseleave="hideBody"
-                        @focus="showBody('helia')"
-                        @blur="hideBody"
-                    >
-                        <span class="sun sun-small" :style="{ '--helia-brightness': heliaBrightness }"></span>
-                        <span class="orbit-label sun-label">{{ celestialBodies.helia.name }}</span>
-                    </a>
-                    <span v-else class="sun sun-small helia-hidden-sun"></span>
-                </span>
+                    {{ isPaused ? 'Resume motion' : 'Pause motion' }}
+                </button>
                 <div
                     v-for="planet in planets"
                     :key="planet.slug"
                     class="orbit-path planet-orbit"
                     :class="`planet-orbit-${planet.slug}`"
-                    :style="planetOrbitStyle(planet.angle)"
+                    :style="orbitStyle(planet.angle, planet.duration)"
                 >
-                    <a
-                        class="orbital-link planet-link"
-                        :class="`planet-link-${planet.slug}`"
-                        :href="bodyUrl(planet.slug)"
-                        :aria-label="`${planet.name}: ${planet.summary}`"
-                        @mouseenter="showBody(planet.slug)"
-                        @mouseleave="hideBody"
-                        @focus="showBody(planet.slug)"
-                        @blur="hideBody"
-                    >
-                        <span class="planet" :class="`planet-${planet.slug}`"></span>
-                        <span class="orbit-label planet-name-label">{{ planet.name }}</span>
-                    </a>
+                    <div class="planet-position">
+                        <a
+                            class="orbital-link planet-link"
+                            :class="`planet-link-${planet.slug}`"
+                            :href="bodyUrl(planet.slug)"
+                            :aria-label="`${planet.name}: ${planet.summary}`"
+                            @mouseenter="showBody(planet.slug)"
+                            @mouseleave="hideBody"
+                            @focus="showBody(planet.slug)"
+                            @blur="hideBody"
+                        >
+                            <span class="planet" :class="`planet-${planet.slug}`"></span>
+                            <span class="orbit-label planet-name-label">{{ planet.name }}</span>
+                        </a>
+                        <div
+                            v-if="planet.slug === heliaPlanet.slug"
+                            class="helia-local-orbit"
+                            :style="heliaOrbitStyle()"
+                        >
+                            <a
+                                class="orbital-link sun-link helia-link"
+                                :href="bodyUrl(celestialBodies.helia.slug)"
+                                :aria-label="`${celestialBodies.helia.name}: ${celestialBodies.helia.summary}`"
+                                @mouseenter="showBody('helia')"
+                                @mouseleave="hideBody"
+                                @focus="showBody('helia')"
+                                @blur="hideBody"
+                            >
+                                <span class="sun sun-small" :style="{ '--helia-brightness': heliaBrightness }"></span>
+                                <span class="orbit-label sun-label">{{ celestialBodies.helia.name }}</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <a
                     class="orbital-link magnar-link"
@@ -419,7 +274,6 @@ onUnmounted(() => {
                     <span class="planet magnar"></span>
                     <span class="planet-label">{{ celestialBodies.magnar.name }}</span>
                 </a>
-                <span class="season-label">{{ season.name.toUpperCase() }} · CYCLE {{ season.cycle }}</span>
                 <Transition name="body-note">
                     <p v-if="activeBody" class="body-note" role="status">
                         <strong>{{ activeBody.name }}</strong>

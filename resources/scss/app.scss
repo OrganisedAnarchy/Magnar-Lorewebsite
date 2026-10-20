@@ -240,49 +240,6 @@ p {
     transform: translate(5%, 1%);
 }
 
-.simulation-toggle {
-    position: absolute;
-    z-index: 5;
-    top: 2%;
-    right: 2%;
-    display: inline-flex;
-    min-height: 30px;
-    align-items: center;
-    gap: 6px;
-    padding: 0 9px;
-    border: 1px solid rgb(197 166 108 / 55%);
-    border-radius: 3px;
-    background: rgb(17 18 15 / 94%);
-    color: #f1dcae;
-    cursor: pointer;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.simulation-toggle:hover,
-.simulation-toggle:focus-visible {
-    border-color: #f1dcae;
-    background: #24231e;
-    color: #fff7e5;
-}
-
-.simulation-toggle:focus-visible {
-    outline: 2px solid #f1dcae;
-    outline-offset: 3px;
-}
-
-.simulation-toggle span {
-    font-size: 10px;
-}
-
-.simulation-paused .orbit-path,
-.simulation-paused .aegis-wanderer,
-.simulation-paused .orbital-link {
-    animation-play-state: paused !important;
-}
-
 .orbit-path {
     position: absolute;
     top: 50%;
@@ -293,74 +250,150 @@ p {
     --orbit-duration: 24s;
     --orbit-delay: 0s;
     pointer-events: none;
+    animation: orbit-motion var(--orbit-duration) linear infinite;
+}
+
+@keyframes orbit-motion {
+    from {
+        transform: translate(-50%, -50%) rotate(var(--orbit-angle));
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 1turn));
+    }
+}
+
+@keyframes counter-orbit {
+    from {
+        transform: translate(-50%, -50%) rotate(calc(0deg - var(--orbit-angle)));
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(calc(-1turn - var(--orbit-angle)));
+    }
+}
+
+@keyframes aegis-orbit-motion {
+    from {
+        transform: translate(-50%, -50%) rotate(var(--orbit-angle));
+    }
+
+    18% {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 52deg));
+    }
+
+    37% {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 136deg));
+    }
+
+    63% {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 211deg));
+    }
+
+    82% {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 304deg));
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(calc(var(--orbit-angle) + 1turn));
+    }
+}
+
+@keyframes aegis-counter-motion {
+    from {
+        transform: translateX(-50%) rotate(calc(0deg - var(--orbit-angle)));
+    }
+
+    18% {
+        transform: translateX(-50%) rotate(calc(-52deg - var(--orbit-angle)));
+    }
+
+    37% {
+        transform: translateX(-50%) rotate(calc(-136deg - var(--orbit-angle)));
+    }
+
+    63% {
+        transform: translateX(-50%) rotate(calc(-211deg - var(--orbit-angle)));
+    }
+
+    82% {
+        transform: translateX(-50%) rotate(calc(-304deg - var(--orbit-angle)));
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(calc(-1turn - var(--orbit-angle)));
+    }
 }
 
 .moon-orbit {
     border-color: rgb(197 166 108 / 20%);
-    animation: orbit-clockwise var(--orbit-duration) linear infinite;
-    animation-delay: var(--orbit-delay);
-}
-
-.moon-orbit-one {
-    width: 26%;
-    animation-duration: 15s;
-}
-
-.moon-orbit-two {
-    width: 34%;
-    animation-duration: 21s;
+    transform: translate(-50%, -50%) rotate(var(--orbit-angle));
 }
 
 .moon-orbit-three {
-    width: 42%;
-    animation: none;
+    animation-name: aegis-orbit-motion;
+}
+
+.moon-orbit .orbital-link,
+.sun-orbit .orbital-link {
+    transform: translate(-50%, -50%) rotate(calc(0deg - var(--orbit-angle)));
+    animation: counter-orbit var(--orbit-duration) linear infinite;
+}
+
+.moon-orbit-one {
+    width: 24%;
+}
+
+.moon-orbit-two {
+    width: 31%;
+}
+
+.moon-orbit-three {
+    width: 38%;
 }
 
 .sun-orbit {
     border-color: rgb(197 166 108 / 24%);
-    animation: orbit-clockwise var(--orbit-duration) linear infinite;
-    animation-delay: var(--orbit-delay);
+    transform: translate(-50%, -50%) rotate(var(--orbit-angle));
 }
 
 .sun-orbit-large {
-    width: 58%;
+    width: 54%;
 }
 
 .planet-orbit {
     border-color: rgb(197 166 108 / 14%);
-    transform: translate(-50%, -50%) rotate(var(--planet-angle));
+    transform: translate(-50%, -50%) rotate(var(--orbit-angle));
 }
 
-.planet-orbit .orbital-link {
-    transform: translate(-50%, -50%) rotate(calc(0deg - var(--planet-angle)));
-    animation: none;
+.planet-position {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: clamp(26px, 8cqw, 40px);
+    height: clamp(26px, 8cqw, 40px);
+    transform: translate(-50%, -50%) rotate(calc(0deg - var(--orbit-angle)));
+    animation: counter-orbit var(--orbit-duration) linear infinite;
 }
 
 .planet-orbit-ogunja {
-    width: 76%;
+    width: 70%;
 }
 
 .planet-orbit-amial {
-    width: 88%;
+    width: 81%;
 }
 
 .planet-orbit-hanar {
-    width: 100%;
+    width: 92%;
 }
 
 .planet-orbit-misana {
-    width: 112%;
+    width: 103%;
 }
 
 .planet-orbit-lysus {
-    width: 124%;
-}
-
-.moon-orbit-one,
-.moon-orbit-two,
-.moon-orbit-three,
-.sun-orbit {
-    transform: translate(-50%, -50%);
+    width: 121%;
 }
 
 .planet {
@@ -377,8 +410,7 @@ p {
     width: clamp(24px, 7cqw, 36px);
     height: clamp(24px, 7cqw, 36px);
     transform: translateX(-50%);
-    animation: aegis-wander var(--orbit-duration) linear infinite;
-    animation-delay: var(--orbit-delay);
+    animation: aegis-counter-motion var(--orbit-duration) linear infinite;
 }
 
 .orbital-link {
@@ -393,8 +425,6 @@ p {
     color: inherit;
     text-decoration: none;
     transform: translate(-50%, -50%);
-    animation: counter-orbit var(--orbit-duration) linear infinite;
-    animation-delay: var(--orbit-delay);
     pointer-events: auto;
 }
 
@@ -428,7 +458,7 @@ p {
 .aegis-wanderer .orbit-label {
     top: calc(100% + 5px);
     bottom: auto;
-    animation: none;
+    transform: translateX(-50%);
 }
 
 .body-note {
@@ -475,63 +505,6 @@ p {
     transform: translate(-50%, 5px);
 }
 
-@keyframes aegis-wander {
-    0% {
-        top: 0;
-        left: 50%;
-    }
-
-    8% {
-        top: 2%;
-        left: 73%;
-    }
-
-    19% {
-        top: 14%;
-        left: 91%;
-    }
-
-    27% {
-        top: 27%;
-        left: 99%;
-    }
-
-    40% {
-        top: 52%;
-        left: 94%;
-    }
-
-    49% {
-        top: 66%;
-        left: 79%;
-    }
-
-    63% {
-        top: 95%;
-        left: 56%;
-    }
-
-    72% {
-        top: 97%;
-        left: 35%;
-    }
-
-    84% {
-        top: 70%;
-        left: 5%;
-    }
-
-    92% {
-        top: 43%;
-        left: 1%;
-    }
-
-    100% {
-        top: 0;
-        left: 50%;
-    }
-}
-
 .magnar {
     position: relative;
     width: 100%;
@@ -550,20 +523,23 @@ p {
     z-index: 2;
     top: 50%;
     left: 50%;
-    width: 15cqw;
-    height: 15cqw;
+    width: 12cqw;
+    height: 12cqw;
     display: grid;
     place-items: center;
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
-    animation: none;
 }
 
 .planet-link {
-    width: clamp(26px, 8cqw, 40px);
-    height: clamp(26px, 8cqw, 40px);
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: 100%;
     aspect-ratio: 1;
     place-items: center;
+    transform: none;
 }
 
 .planet-name-label {
@@ -571,47 +547,41 @@ p {
 }
 
 .planet-ogunja {
-    width: 3.75cqw;
-    height: 3.75cqw;
+    width: 3cqw;
+    height: 3cqw;
     background: radial-gradient(circle at 35% 30%, #d78b58, #9a4931 58%, #4e2825 90%);
     box-shadow: 0 0 12px rgb(188 94 56 / 34%);
 }
 
 .planet-amial {
-    width: 3.75cqw;
-    height: 3.75cqw;
+    width: 3cqw;
+    height: 3cqw;
     background: radial-gradient(circle at 35% 30%, #f2a8b7, #b95d80 58%, #542c52 90%);
     box-shadow: 0 0 12px rgb(210 111 149 / 36%);
 }
 
 .planet-hanar {
-    width: 8cqw;
-    height: 8cqw;
+    width: 6.4cqw;
+    height: 6.4cqw;
     background: radial-gradient(circle at 35% 30%, #b7b8ff, #706ac2 58%, #302d64 90%);
     box-shadow: 0 0 13px rgb(136 129 235 / 46%);
 }
 
 .planet-misana {
-    width: 3.15cqw;
-    height: 3.15cqw;
+    width: 2.5cqw;
+    height: 2.5cqw;
     background: radial-gradient(circle at 35% 30%, #c4d3d2, #718a88 58%, #303b42 90%);
     box-shadow: 0 0 11px rgb(153 185 180 / 30%);
 }
 
 .planet-lysus {
-    width: 12cqw;
-    height: 12cqw;
+    width: 9.6cqw;
+    height: 9.6cqw;
     background:
         radial-gradient(ellipse at 58% 65%, #ffb34f 0 8%, transparent 10%),
         radial-gradient(ellipse at 34% 40%, #ed7650 0 9%, transparent 11%),
         radial-gradient(circle at 35% 30%, #80645a, #49352f 60%, #211b1a 90%);
     box-shadow: 0 0 15px rgb(224 103 56 / 35%);
-}
-
-.moon-disappears {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 1.2s ease, visibility 1.2s ease;
 }
 
 .moon-orbit .moon,
@@ -655,8 +625,8 @@ p {
 }
 
 .moon-mwezi {
-    width: 1.7cqw;
-    height: 1.7cqw;
+    width: 1.35cqw;
+    height: 1.35cqw;
     background: radial-gradient(circle at 35% 30%, #ef9682, #a93335 55%, #581f29 88%);
     box-shadow: 0 0 13px rgb(195 63 62 / 36%), inset -2px -1px 4px rgb(57 13 20 / 45%);
 }
@@ -700,11 +670,10 @@ p {
 }
 
 .moon-ambross {
-    width: 2.2cqw;
-    height: 2.2cqw;
+    width: 1.75cqw;
+    height: 1.75cqw;
     background: radial-gradient(circle at 35% 30%, #ffd49a, #d07835 58%, #794127 88%);
     box-shadow: 0 0 12px rgb(218 127 54 / 35%), inset -2px -1px 4px rgb(75 35 18 / 40%);
-    transition: background .8s ease, box-shadow .8s ease;
 }
 
 .moon-ambross .moon-shadow {
@@ -719,18 +688,9 @@ p {
     opacity: 1;
 }
 
-.moon-ambross.is-autumn {
-    background: radial-gradient(circle at 35% 30%, #e1faff, #59b9ee 55%, #2863ba 88%);
-    box-shadow: 0 0 15px 4px rgb(82 177 241 / 66%), 0 0 32px 9px rgb(49 126 228 / 36%);
-}
-
-.moon-ambross.is-autumn .moon-shadow {
-    background: #17314d;
-}
-
 .moon-outer {
-    width: 2.8cqw;
-    height: 2.8cqw;
+    width: 2.25cqw;
+    height: 2.25cqw;
     background: radial-gradient(circle at 35% 30%, #d8d0bc, #827b6a 76%);
     box-shadow: 0 0 9px rgb(222 214 194 / 20%);
 }
@@ -820,60 +780,67 @@ p {
     width: 100%;
     height: 100%;
     place-items: center;
-    transform: none;
-    animation: none;
+    transform: translate(-50%, -50%) rotate(calc(0deg - var(--orbit-angle)));
+    animation: counter-orbit var(--orbit-duration) linear infinite;
 }
 
-.helia-agent {
+.helia-local-orbit {
     position: absolute;
     z-index: 3;
-    top: var(--helia-position-y);
-    left: var(--helia-position-x);
+    top: 50%;
+    left: 50%;
+    width: 16cqw;
+    aspect-ratio: 1;
+    border: 1px dashed rgb(228 199 141 / 55%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(var(--orbit-angle));
+    animation: orbit-motion var(--orbit-duration) linear infinite;
+    pointer-events: none;
+}
+
+.helia-local-orbit .helia-link {
+    position: absolute;
+    top: 0;
+    left: 50%;
     width: clamp(28px, 8cqw, 40px);
     height: clamp(28px, 8cqw, 40px);
-    transform: translate(-50%, -50%);
-    visibility: hidden;
-    pointer-events: none;
-}
-
-.helia-agent-active {
-    visibility: visible;
     pointer-events: auto;
 }
 
-.helia-agent-active .helia-link {
-    pointer-events: auto;
+.hero-art.is-paused .orbit-path,
+.hero-art.is-paused .planet-position,
+.hero-art.is-paused .aegis-wanderer,
+.hero-art.is-paused .helia-local-orbit,
+.hero-art.is-paused .moon-orbit .orbital-link,
+.hero-art.is-paused .sun-orbit .orbital-link,
+.hero-art.is-paused .helia-link {
+    animation-play-state: paused;
 }
 
-.helia-route {
+.orbit-toggle {
     position: absolute;
-    z-index: 1;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
+    right: 2%;
+    bottom: 2%;
+    z-index: 5;
+    padding: 6px 9px;
+    border: 1px solid rgb(197 166 108 / 45%);
+    border-radius: 3px;
+    background: rgb(17 18 15 / 90%);
+    color: #d2c4a2;
+    font-size: 9px;
+    letter-spacing: .08em;
+    cursor: pointer;
 }
 
-.helia-route-strand {
-    fill: none;
-    stroke-width: .22;
-    stroke-dasharray: .4 .7;
-    filter: drop-shadow(0 0 1px rgb(206 176 112 / 35%));
-}
-
-.helia-route-strand-one {
-    stroke: #e8c780;
-}
-
-.helia-route-strand-two {
-    stroke: #91b9bd;
-    opacity: .72;
+.orbit-toggle:hover,
+.orbit-toggle:focus-visible {
+    border-color: #f1dcae;
+    color: #fff7e5;
 }
 
 .sun-large {
-    width: 6cqw;
-    height: 6cqw;
+    width: 4.8cqw;
+    height: 4.8cqw;
     aspect-ratio: 1;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 32%, #fff3c4, #edbc65 53%, #bc7842 80%);
@@ -881,35 +848,14 @@ p {
 }
 
 .sun-small {
-    width: 4.5cqw;
-    height: 4.5cqw;
+    width: 3.6cqw;
+    height: 3.6cqw;
     aspect-ratio: 1;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 32%, #e8d8b4, #b79b70 57%, #796c55 85%);
     box-shadow: 0 0 9px 3px rgb(183 155 112 / 22%), 0 0 23px 8px rgb(183 155 112 / 10%);
     filter: brightness(var(--helia-brightness, 1));
     transition: filter .2s linear;
-}
-
-.season-label {
-    position: absolute;
-    z-index: 4;
-    top: -6%;
-    left: 50%;
-    padding: 6px 10px;
-    transform: translateX(-50%);
-    border: 1px solid rgb(197 166 108 / 55%);
-    border-radius: 3px;
-    background: rgb(17 18 15 / 96%);
-    color: #f1dcae;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: .16em;
-    line-height: 1.2;
-    text-align: center;
-    text-shadow: 0 1px 3px #000;
-    white-space: nowrap;
-    box-shadow: 0 3px 12px rgb(0 0 0 / 55%);
 }
 
 .planet-label {
@@ -944,36 +890,20 @@ p {
     font-size: 13px;
 }
 
-@keyframes orbit-clockwise {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-
-@keyframes counter-orbit {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-
-    to {
-        transform: translate(-50%, -50%) rotate(-360deg);
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .aegis-wanderer,
-    .moon-orbit,
-    .sun-orbit,
-    .planet-orbit {
-        animation: none;
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
     }
 
-    .planet-orbit .orbital-link {
-        animation: none;
+    .orbit-path,
+    .planet-position,
+    .aegis-wanderer,
+    .helia-local-orbit,
+    .helia-link {
+        animation: none !important;
     }
 }
 

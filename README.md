@@ -15,7 +15,10 @@ contextual, character-known information rather than open-ended lore authoring.
 The celestial system presents Magnar and its three moons, two suns, and five
 neighboring planets. Magnar's year is 780 days: two 390-day cycles, each
 containing thirteen 30-day months. Its eight seasonal stages place winter on
-both sides of the cycle boundary, making one 195-day winter.
+both sides of the cycle boundary, making one 195-day winter. The system diagram
+keeps its celestial bodies in continuous motion with randomized starting
+positions. It does not simulate seasons or cycles, and Helia remains assigned
+to one randomly chosen inner planet for the duration of the page view.
 
 ## Run with Docker
 
