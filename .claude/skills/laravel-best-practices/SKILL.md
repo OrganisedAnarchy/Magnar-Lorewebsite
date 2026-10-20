@@ -10,6 +10,17 @@ metadata:
 
 Best practices for Laravel, organized as an index of rule files. Each rule file teaches what to do and why. For exact API syntax, verify with `search-docs`.
 
+## Project Domain Context
+
+This application is **The World of Magnar**, a player-facing TTRPG character
+reference, not a general-purpose lore wiki or a World Anvil clone. Its intended
+direction is for signed-in players to manage characters, select their faith,
+birthplace, and race, then quickly reference setting details their character
+would know. Character choices may include the gods they believe in. Keep
+Laravel features and data structures centered on player characters and
+contextual knowledge; do not build open-ended world-authoring features unless
+specifically requested.
+
 ## Consistency First
 
 Before applying any rule, check what the application already does. Laravel offers multiple valid approaches, and the best choice is the one the codebase already uses, even if another pattern would be theoretically better. Inconsistency is worse than a suboptimal pattern.

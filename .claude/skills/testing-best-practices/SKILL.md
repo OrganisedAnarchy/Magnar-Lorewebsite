@@ -11,6 +11,16 @@ metadata:
 This skill provides rules for designing Laravel tests. Each rule file explains what to do and why. Use `search-docs` for Laravel API syntax. Fetch the PHPUnit 12.5.40 documentation at `https://phpunit.de/documentation.html` for PHPUnit API syntax.
 This project uses PHPUnit. Follow the corresponding guidance in each rule.
 
+## Project Domain Context
+
+This application is **The World of Magnar**, a player-focused TTRPG character
+reference, not a general-purpose lore wiki or a World Anvil clone. Its intended
+direction is for signed-in players to manage characters, choose which gods
+they believe in, their birthplace, and race, and quickly find setting
+information that character would know. When testing future features, verify
+the player-character context and relevant known information rather than
+assumptions from an unrestricted lore-authoring workflow.
+
 ## Consistency First
 
 Read nearby tests before you choose syntax and organization.
