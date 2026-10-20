@@ -1,4 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 
-createApp(App).mount('#app');
+const mountElement = document.getElementById('app');
+
+createApp(App, {
+    authenticated: mountElement.dataset.authenticated === 'true',
+    userName: mountElement.dataset.userName ?? '',
+    csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+}).mount(mountElement);
