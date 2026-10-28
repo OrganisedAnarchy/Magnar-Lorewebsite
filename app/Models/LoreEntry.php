@@ -8,7 +8,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['category', 'title', 'description'])]
+#[Fillable([
+    'category',
+    'title',
+    'description',
+    'dob_day',
+    'dob_month',
+    'dob_cycle',
+    'dob_year',
+    'dod_day',
+    'dod_month',
+    'dod_cycle',
+    'dod_year',
+])]
 class LoreEntry extends Model
 {
     /** @use HasFactory<LoreEntryFactory> */

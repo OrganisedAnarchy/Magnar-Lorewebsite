@@ -6,6 +6,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    admin: {
+        type: Boolean,
+        default: false,
+    },
     userName: {
         type: String,
         default: '',
@@ -17,6 +21,10 @@ const props = defineProps({
     celestialBodies: {
         type: Object,
         required: true,
+    },
+    admin: {
+        type: Boolean,
+        default: false,
     },
 });
 
@@ -105,6 +113,7 @@ function hideBody() {
             <nav class="header-actions" aria-label="Account">
                 <template v-if="authenticated">
                     <span class="member-name">Welcome, {{ userName }}</span>
+                    <a v-if="admin" class="button button-quiet" href="/admin">Admin</a>
                     <form action="/logout" method="post">
                         <input type="hidden" name="_token" :value="csrfToken">
                         <button class="button button-quiet" type="submit">Sign out</button>

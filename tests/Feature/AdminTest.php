@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LoreEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminTest extends TestCase
@@ -42,6 +43,151 @@ class AdminTest extends TestCase
             ->assertRedirect(route('admin.entries.index'));
 
         $this->assertDatabaseHas('lore_entries', ['category' => 'magic', 'title' => 'Fireball']);
+    }
+
+    public function test_admin_can_save_people_dates_in_the_in_world_calendar(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Magnar',
+                'dob_day' => 30,
+                'dob_month' => 13,
+                'dob_cycle' => 2,
+                'dob_year' => 120,
+                'dod_day' => 1,
+                'dod_month' => 1,
+                'dod_cycle' => 1,
+                'dod_year' => 220,
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'category' => 'people',
+            'title' => 'Magnar',
+            'dob_day' => 30,
+            'dob_month' => 13,
+            'dob_cycle' => 2,
+            'dob_year' => 120,
+            'dod_day' => 1,
+            'dod_month' => 1,
+            'dod_cycle' => 1,
+            'dod_year' => 220,
+        ]);
+    }
+
+    public function test_admin_can_save_people_without_birth_or_death_dates(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Unknown Spirit',
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'category' => 'people',
+            'title' => 'Unknown Spirit',
+            'dob_day' => null,
+            'dod_day' => null,
+        ]);
+    }
+
+    public function test_non_people_entries_do_not_save_people_dates(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'magic',
+                'title' => 'Fireball',
+                'dob_day' => 12,
+                'dob_month' => 3,
+                'dob_cycle' => 1,
+                'dob_year' => 100,
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'category' => 'magic',
+            'title' => 'Fireball',
+            'dob_day' => null,
+            'dod_day' => null,
+        ]);
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function invalidDateComponents(): array
+    {
+        return [
+            'day below range' => ['dob_day', 0],
+            'day above range' => ['dob_day', 31],
+            'month below range' => ['dob_month', 0],
+            'month above range' => ['dob_month', 14],
+            'cycle below range' => ['dob_cycle', 0],
+            'cycle above range' => ['dob_cycle', 3],
+            'negative year' => ['dob_year', -1],
+            'death day above range' => ['dod_day', 31],
+        ];
+    }
+
+    #[DataProvider('invalidDateComponents')]
+    public function test_invalid_in_world_date_components_are_rejected(string $field, int $value): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Invalid Date',
+                $field => $value,
+            ])
+            ->assertSessionHasErrors($field);
+
+        $this->assertDatabaseCount('lore_entries', 0);
+    }
+
+    public function test_in_world_dates_require_all_four_components_when_started(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Partial Date',
+                'dob_day' => 12,
+            ])
+            ->assertSessionHasErrors(['dob_month', 'dob_cycle', 'dob_year']);
+
+        $this->assertDatabaseCount('lore_entries', 0);
+    }
+
+    public function test_admin_can_update_people_dates(): void
+    {
+        $entry = LoreEntry::factory()->create(['category' => 'people']);
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.entries.update', $entry), [
+                'category' => 'people',
+                'title' => $entry->title,
+                'dob_day' => 4,
+                'dob_month' => 6,
+                'dob_cycle' => 1,
+                'dob_year' => 80,
+                'dod_day' => 22,
+                'dod_month' => 9,
+                'dod_cycle' => 2,
+                'dod_year' => 170,
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'id' => $entry->id,
+            'dob_day' => 4,
+            'dob_month' => 6,
+            'dob_cycle' => 1,
+            'dob_year' => 80,
+            'dod_day' => 22,
+            'dod_month' => 9,
+            'dod_cycle' => 2,
+            'dod_year' => 170,
+        ]);
     }
 
     public function test_entry_category_and_title_are_validated(): void

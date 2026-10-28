@@ -337,3 +337,12 @@ function mount(textarea) {
 }
 
 document.querySelectorAll('textarea[data-markdown-editor]').forEach(mount);
+
+const categorySelect = document.querySelector('#category');
+const peopleDates = document.querySelector('#people-dates');
+
+if (categorySelect && peopleDates) {
+    categorySelect.addEventListener('change', () => {
+        peopleDates.hidden = categorySelect.value !== 'people';
+    });
+}

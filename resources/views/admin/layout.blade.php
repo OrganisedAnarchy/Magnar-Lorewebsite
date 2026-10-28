@@ -26,6 +26,13 @@
         .filters a { padding: .25rem .75rem; border: 1px solid #3a3450; border-radius: 999px; color: #cdb8ff; text-decoration: none; font-size: .9rem; }
         .filters a.active { background: #6b4fd8; color: #fff; border-color: #6b4fd8; }
         .hint { color: #9a93ad; font-size: .85rem; }
+        .date-group { margin-top: 1rem; border: 1px solid #3a3450; border-radius: 4px; }
+        .date-group legend { color: #cdb8ff; font-weight: 600; }
+        .date-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+        .date-control { position: relative; }
+        .date-control input { padding: 1.15rem .5rem .35rem; }
+        .date-control label { position: absolute; top: 50%; left: .6rem; margin: 0; color: #9a93ad; font-size: .9rem; font-weight: 400; line-height: 1; pointer-events: none; transform: translateY(-50%); transition: top .15s ease, transform .15s ease, font-size .15s ease, color .15s ease; }
+        .date-control input:focus + label, .date-control input:not(:placeholder-shown) + label { top: .25rem; color: #cdb8ff; font-size: .7rem; transform: none; }
     </style>
     @stack('head')
 </head>
