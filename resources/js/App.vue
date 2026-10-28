@@ -128,7 +128,6 @@ function hideBody() {
                     <a v-if="!authenticated" class="button button-primary" href="/register">
                         Retrieve your chronicle <span aria-hidden="true">↗</span>
                     </a>
-                    <span v-else class="button button-primary button-static">Sign up</span>
                     <a v-if="!authenticated" class="text-link" href="/login">Already have an account? Sign in</a>
                 </div>
             </div>
