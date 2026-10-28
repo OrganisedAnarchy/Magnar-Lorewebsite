@@ -32,9 +32,81 @@ class LoreEntry extends Model
         'cosmology' => ['label' => 'Cosmology', 'examples' => 'Reality, dimensions, fate'],
     ];
 
+    /**
+     * Split the text of a wikilink into title, alias and category.
+     *
+     * @return array{title: string, alias: ?string, category: string}
+     */
+    public static function parseWikilink(string $inner): array
+    {
+        $at = strrpos($inner, '@');
+        $left = $at === false ? $inner : substr($inner, 0, $at);
+        $category = $at === false ? '' : trim(substr($inner, $at + 1));
+        $pipe = strpos($left, '|');
+        $alias = $pipe === false ? null : trim(substr($left, $pipe + 1));
+
+        return [
+            'title' => trim($pipe === false ? $left : substr($left, 0, $pipe)),
+            'alias' => $alias === '' ? null : $alias,
+            'category' => $category,
+        ];
+    }
+
+    /**
+     * Whether each wikilink in the given text points at an existing entry.
+     *
+     * @return array<int, array{title: string, category: string, exists: bool}>
+     */
+    public static function linkStatuses(?string $text): array
+    {
+        preg_match_all('/\[\[([^\]\n]+)\]\]/', (string) $text, $matches);
+
+        return collect($matches[1])
+            ->map(fn (string $inner): array => self::parseWikilink($inner))
+            ->filter(fn (array $link): bool => $link['title'] !== '')
+            ->unique(fn (array $link): string => mb_strtolower($link['title'].'@'.$link['category']))
+            ->map(fn (array $link): array => [
+                'title' => $link['title'],
+                'category' => $link['category'],
+                'exists' => self::linkExists($link['title'], $link['category']),
+            ])
+            ->values()
+            ->all();
+    }
+
+    public static function linkExists(string $title, ?string $category): bool
+    {
+        $resolved = filled($category) ? self::resolveCategory($category) : null;
+
+        if (filled($category) && $resolved === null) {
+            return false;
+        }
+
+        return self::query()
+            ->whereRaw('lower(title) = ?', [mb_strtolower(trim($title))])
+            ->when($resolved, fn ($query) => $query->where('category', $resolved))
+            ->exists();
+    }
+
     public function categoryLabel(): string
     {
-        return self::CATEGORIES[$this->category]['label'] ?? $this->category;
+        return self::CATEGORIES[$this->category]['label'] ?? 'Uncategorized';
+    }
+
+    /**
+     * Match a category key or label (case-insensitive) to its key.
+     */
+    public static function resolveCategory(?string $value): ?string
+    {
+        $value = mb_strtolower(trim((string) $value));
+
+        foreach (self::CATEGORIES as $key => $info) {
+            if ($value === $key || $value === mb_strtolower($info['label'])) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     public function events(): BelongsToMany

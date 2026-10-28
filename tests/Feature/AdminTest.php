@@ -82,6 +82,108 @@ class AdminTest extends TestCase
             ->assertDontSee('Oakheart');
     }
 
+    public function test_search_returns_matching_entries(): void
+    {
+        LoreEntry::factory()->create(['category' => 'magic', 'title' => 'Pyromancy']);
+        LoreEntry::factory()->create(['category' => null, 'title' => 'Pyre Guard']);
+        LoreEntry::factory()->create(['category' => 'nature', 'title' => 'Oakheart']);
+
+        $this->actingAs($this->admin())
+            ->getJson(route('admin.entries.search', ['q' => 'pyr']))
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment(['title' => 'Pyromancy', 'category' => 'Magic & the Arcane'])
+            ->assertJsonFragment(['title' => 'Pyre Guard', 'category' => 'Uncategorized']);
+    }
+
+    public function test_resolving_a_missing_link_creates_an_uncategorized_entry(): void
+    {
+        $response = $this->actingAs($this->admin())
+            ->postJson(route('admin.entries.resolve'), ['title' => 'Brand New'])
+            ->assertOk()
+            ->assertJson(['created' => true]);
+
+        $entry = LoreEntry::where('title', 'Brand New')->firstOrFail();
+        $this->assertNull($entry->category);
+        $this->assertSame(route('admin.entries.edit', $entry), $response->json('url'));
+    }
+
+    public function test_resolving_a_missing_link_with_a_category_uses_it(): void
+    {
+        $this->actingAs($this->admin())
+            ->postJson(route('admin.entries.resolve'), ['title' => 'Fireball', 'category' => 'magic & the arcane'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('lore_entries', ['title' => 'Fireball', 'category' => 'magic']);
+    }
+
+    public function test_resolving_an_existing_link_does_not_create_a_duplicate(): void
+    {
+        $entry = LoreEntry::factory()->create(['category' => 'magic', 'title' => 'Fireball']);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('admin.entries.resolve'), ['title' => 'fireball'])
+            ->assertOk()
+            ->assertJson(['created' => false, 'url' => route('admin.entries.edit', $entry)]);
+
+        $this->assertDatabaseCount('lore_entries', 1);
+    }
+
+    public function test_resolving_with_an_unknown_category_fails(): void
+    {
+        $this->actingAs($this->admin())
+            ->postJson(route('admin.entries.resolve'), ['title' => 'X', 'category' => 'nonsense'])
+            ->assertStatus(422);
+
+        $this->assertDatabaseCount('lore_entries', 0);
+    }
+
+    public function test_uncategorized_entry_cannot_be_saved_without_a_category(): void
+    {
+        $entry = LoreEntry::factory()->create(['category' => null]);
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.entries.edit', $entry))
+            ->assertOk()
+            ->assertSee('This entry is uncategorized');
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.entries.update', $entry), ['category' => '', 'title' => 'Still here'])
+            ->assertSessionHasErrors('category');
+    }
+
+    public function test_check_reports_which_links_exist(): void
+    {
+        LoreEntry::factory()->create(['category' => 'magic', 'title' => 'Fireball']);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('admin.entries.check'), ['links' => [
+                ['title' => 'fireball', 'category' => ''],
+                ['title' => 'Fireball', 'category' => 'Magic & the Arcane'],
+                ['title' => 'Fireball', 'category' => 'nature'],
+                ['title' => 'Fireball', 'category' => 'nonsense'],
+                ['title' => 'Missing'],
+            ]])
+            ->assertOk()
+            ->assertExactJson(['results' => [true, true, false, false, false]]);
+
+        $this->assertDatabaseCount('lore_entries', 1);
+    }
+
+    public function test_edit_page_embeds_link_statuses_for_the_description(): void
+    {
+        LoreEntry::factory()->create(['category' => 'magic', 'title' => 'Fireball']);
+        $entry = LoreEntry::factory()->create(['description' => 'See [[Fireball|a spell]] and [[Ghost@nature]].']);
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.entries.edit', $entry))
+            ->assertOk()
+            ->assertSee(e(json_encode([
+                ['title' => 'Fireball', 'category' => '', 'exists' => true],
+                ['title' => 'Ghost', 'category' => 'nature', 'exists' => false],
+            ])), false);
+    }
+
     public function test_admin_pages_render(): void
     {
         $entry = LoreEntry::factory()->create();

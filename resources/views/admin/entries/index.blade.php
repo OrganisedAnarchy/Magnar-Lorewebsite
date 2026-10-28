@@ -8,6 +8,7 @@
 
     <nav class="filters" aria-label="Categories">
         <a href="{{ route('admin.entries.index') }}" @class(['active' => ! $category])>All</a>
+        <a href="{{ route('admin.entries.index', ['category' => 'uncategorized']) }}" @class(['active' => $category === 'uncategorized'])>Uncategorized</a>
         @foreach (\App\Models\LoreEntry::CATEGORIES as $key => $info)
             <a href="{{ route('admin.entries.index', ['category' => $key]) }}" title="{{ $info['examples'] }}" @class(['active' => $category === $key])>{{ $info['label'] }}</a>
         @endforeach

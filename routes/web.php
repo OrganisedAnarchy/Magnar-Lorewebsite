@@ -18,6 +18,9 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::redirect('/', '/admin/entries')->name('index');
+    Route::get('entries/search', [LoreEntryController::class, 'search'])->name('entries.search');
+    Route::post('entries/check', [LoreEntryController::class, 'check'])->name('entries.check');
+    Route::post('entries/resolve', [LoreEntryController::class, 'resolve'])->name('entries.resolve');
     Route::resource('entries', LoreEntryController::class)->except('show');
 });
 
