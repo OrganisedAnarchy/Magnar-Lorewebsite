@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Event;
-use App\Models\LoreSubject;
+use App\Models\LoreEntry;
 use App\Models\Place;
 use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,16 +19,15 @@ class EventTest extends TestCase
             'name' => 'Lomile',
             'category' => 'populated_area',
         ]);
-        $location = LoreSubject::create([
-            'category' => 'location',
-            'name' => 'Lomile lore',
-            'overview' => 'A busy city.',
-            'place_id' => $place->id,
+        $location = LoreEntry::create([
+            'category' => 'places',
+            'title' => 'Lomile lore',
+            'description' => 'A busy city.',
         ]);
-        $organisation = LoreSubject::create([
-            'category' => 'organisation',
-            'name' => 'Lomile Guard',
-            'overview' => 'The city watch.',
+        $organisation = LoreEntry::create([
+            'category' => 'organisations',
+            'title' => 'Lomile Guard',
+            'description' => 'The city watch.',
         ]);
         $warTag = Tag::create(['name' => 'war']);
         $event = Event::create([
@@ -40,7 +39,7 @@ class EventTest extends TestCase
             'day' => 8,
             'place_id' => $place->id,
         ]);
-        $event->loreSubjects()->attach([$location->id, $organisation->id]);
+        $event->loreEntries()->attach([$location->id, $organisation->id]);
         $event->tags()->attach($warTag);
         $event->refresh();
 
@@ -52,7 +51,7 @@ class EventTest extends TestCase
         $this->assertSame($place->id, $event->place->id);
         $this->assertSame(
             [$location->id, $organisation->id],
-            $event->loreSubjects->modelKeys(),
+            $event->loreEntries->modelKeys(),
         );
         $this->assertSame($warTag->id, $event->tags->sole()->id);
         $this->assertDatabaseHas('events', [
@@ -78,7 +77,7 @@ class EventTest extends TestCase
         ]);
 
         $this->assertNull($event->place);
-        $this->assertCount(0, $event->loreSubjects);
+        $this->assertCount(0, $event->loreEntries);
         $this->assertCount(0, $event->tags);
         $this->assertDatabaseHas('events', [
             'id' => $event->id,

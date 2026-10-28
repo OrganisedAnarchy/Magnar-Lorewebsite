@@ -28,9 +28,9 @@ class Event extends Model
         return $this->belongsTo(Place::class);
     }
 
-    public function loreSubjects(): BelongsToMany
+    public function loreEntries(): BelongsToMany
     {
-        return $this->belongsToMany(LoreSubject::class, 'event_lore_subject');
+        return $this->belongsToMany(LoreEntry::class, 'event_lore_entry');
     }
 
     public function tags(): BelongsToMany

@@ -2,7 +2,8 @@
 
 $ink: #f3eee5;
 $muted: #aaa397;
-$gold: #c5a66c;
+$silver: #a8a8a8;
+$amethyst: #c08be4;
 $night: #11120f;
 
 * {
@@ -69,9 +70,9 @@ input {
     width: 30px;
     height: 30px;
     place-items: center;
-    border: 1px solid rgb(197 166 108 / 70%);
+    border: 1px solid rgb(168 168 168 / 70%);
     border-radius: 50%;
-    color: $gold;
+    color: $silver;
     font-family: 'Playfair Display', serif;
     font-size: 17px;
     font-weight: 500;
@@ -116,7 +117,7 @@ input {
 
 .button-quiet:hover,
 .text-link:hover {
-    color: $gold;
+    color: $silver;
 }
 
 .button-small {
@@ -151,7 +152,7 @@ input {
     align-items: center;
     gap: 12px;
     margin: 0 0 29px;
-    color: $gold;
+    color: $silver;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: .18em;
@@ -162,7 +163,7 @@ input {
     display: inline-block;
     width: 29px;
     height: 1px;
-    background: $gold;
+    background: $silver;
 }
 
 h1,
@@ -181,7 +182,7 @@ p {
 }
 
 .hero h1 em {
-    color: $gold;
+    color: $amethyst;
     font-weight: 500;
 }
 
@@ -202,13 +203,13 @@ p {
 .button-primary {
     min-height: 48px;
     padding: 0 21px;
-    background: #b59a68;
+    background: $silver;
     color: #191812;
     font-size: 12px;
 }
 
 .button-primary:hover {
-    background: #d0b783;
+    background: $amethyst;
 }
 
 .button-static {
@@ -823,7 +824,7 @@ p {
     bottom: 2%;
     z-index: 5;
     padding: 6px 9px;
-    border: 1px solid rgb(197 166 108 / 45%);
+    border: 1px solid rgba($amethyst, .45);
     border-radius: 3px;
     background: rgb(17 18 15 / 90%);
     color: #d2c4a2;
@@ -911,7 +912,8 @@ p {
     min-height: 65px;
     justify-content: space-between;
     border-top: 1px solid rgb(243 238 229 / 10%);
-    color: #77766f;
+    color: rgba($amethyst, .7);
+    font-family: 'DM Sans', sans-serif;
     font-size: 9px;
     letter-spacing: .12em;
 }
@@ -960,7 +962,7 @@ p {
 .celestial-summary {
     max-width: 620px;
     margin-bottom: 28px;
-    color: $gold;
+    color: $silver;
     font-family: 'Playfair Display', Georgia, serif;
     font-size: clamp(20px, 3vw, 27px);
     line-height: 1.5;
@@ -1060,7 +1062,7 @@ p {
 }
 
 .form-field input:focus {
-    border-color: $gold;
+    border-color: $silver;
 }
 
 .form-field input::placeholder {
@@ -1091,7 +1093,7 @@ p {
 }
 
 .remember-row input {
-    accent-color: $gold;
+    accent-color: $silver;
 }
 
 .auth-submit {
@@ -1107,7 +1109,7 @@ p {
 }
 
 .auth-switch a {
-    color: $gold;
+    color: $silver;
 }
 
 .auth-back {
