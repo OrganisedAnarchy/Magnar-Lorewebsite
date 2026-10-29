@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LoreEntryRequest;
 use App\Models\LoreEntry;
+use App\Models\SubCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -112,7 +113,9 @@ class LoreEntryController extends Controller
 
     public function store(LoreEntryRequest $request): RedirectResponse
     {
-        LoreEntry::create($request->validated());
+        $data = $request->validated();
+        LoreEntry::create($data);
+        SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
         return redirect()->route('admin.entries.index')->with('status', 'Entry created.');
     }
@@ -127,7 +130,9 @@ class LoreEntryController extends Controller
 
     public function update(LoreEntryRequest $request, LoreEntry $entry): RedirectResponse
     {
-        $entry->update($request->validated());
+        $data = $request->validated();
+        $entry->update($data);
+        SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
         return redirect()->route('admin.entries.index')->with('status', 'Entry updated.');
     }

@@ -45,6 +45,28 @@ class AdminTest extends TestCase
         $this->assertDatabaseHas('lore_entries', ['category' => 'magic', 'title' => 'Fireball']);
     }
 
+    public function test_new_sub_categories_are_saved_and_suggested_once(): void
+    {
+        $admin = $this->admin();
+
+        foreach (['Guild', 'guild'] as $title => $subCategory) {
+            $this->actingAs($admin)->post(route('admin.entries.store'), [
+                'category' => 'organisations',
+                'sub_category' => $subCategory,
+                'title' => "Entry {$title}",
+            ])->assertRedirect(route('admin.entries.index'));
+        }
+
+        $this->assertDatabaseCount('sub_categories', 1);
+        $this->assertDatabaseHas('sub_categories', ['category' => 'organisations', 'name' => 'Guild']);
+        $this->assertDatabaseHas('lore_entries', ['title' => 'Entry 0', 'sub_category' => 'Guild']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.entries.create'))
+            ->assertOk()
+            ->assertSee('Guild');
+    }
+
     public function test_admin_can_save_people_dates_in_the_in_world_calendar(): void
     {
         $this->actingAs($this->admin())
@@ -373,7 +395,7 @@ class AdminTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.entries.edit', $entry))
             ->assertOk()
-            ->assertSee('This entry is uncategorized');
+            ->assertSee('&quot;uncategorized&quot;:true', false);
 
         $this->actingAs($this->admin())
             ->put(route('admin.entries.update', $entry), ['category' => '', 'title' => 'Still here'])

@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'category',
+    'sub_category',
     'title',
     'description',
     'dob_day',
@@ -123,6 +125,16 @@ class LoreEntry extends Model
         }
 
         return null;
+    }
+
+    public function ranks(): HasMany
+    {
+        return $this->hasMany(OrganisationRank::class, 'organisation_id')->orderBy('level')->orderBy('name');
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(OrganisationMember::class, 'organisation_id');
     }
 
     public function events(): BelongsToMany

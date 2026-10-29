@@ -217,12 +217,46 @@ function wikilinkAt(view, pos) {
     return null;
 }
 
-function mount(textarea) {
-    const { searchUrl, resolveUrl, checkUrl } = textarea.dataset;
-    const categories = JSON.parse(textarea.dataset.categories ?? '[]');
+// Typing "[" over a selection wraps it (selection is kept, so a second "[" nests);
+// typing "[" right after another "[" completes the pair as "[[]]".
+const bracketHelper = EditorView.inputHandler.of((view, from, to, text) => {
+    if (text !== '[') {
+        return false;
+    }
+
+    const { state } = view;
+    const range = state.selection.main;
+
+    if (!range.empty && from === range.from && to === range.to) {
+        view.dispatch({
+            changes: [
+                { from: range.from, insert: '[' },
+                { from: range.to, insert: ']' },
+            ],
+            selection: { anchor: range.from + 1, head: range.to + 1 },
+            userEvent: 'input',
+        });
+
+        return true;
+    }
+
+    if (from === to && from > 0 && state.sliceDoc(from - 1, from) === '[') {
+        view.dispatch({
+            changes: { from, insert: '[]]' },
+            selection: { anchor: from + 1 },
+            userEvent: 'input',
+        });
+
+        return true;
+    }
+
+    return false;
+});
+
+export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolveUrl, checkUrl, categories = [], linkStatuses = [] }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
-    for (const link of JSON.parse(textarea.dataset.linkStatuses ?? '[]')) {
+    for (const link of linkStatuses) {
         linkStatus.set(linkKey(link), link.exists);
     }
     // Insert the chosen text and close the link if it isn't closed already.
@@ -307,18 +341,15 @@ function mount(textarea) {
         },
     });
 
-    const holder = document.createElement('div');
-    textarea.after(holder);
-    textarea.style.display = 'none';
-
-    new EditorView({
-        parent: holder,
+    return new EditorView({
+        parent,
         state: EditorState.create({
-            doc: textarea.value,
+            doc,
             extensions: [
                 history(),
                 autocompletion({ override: [wikilinkSource], activateOnTyping: true }),
                 clickToOpen,
+                bracketHelper,
                 drawSelection(),
                 keymap.of([{ key: 'Tab', run: acceptCompletion }, ...completionKeymap, ...defaultKeymap, ...historyKeymap]),
                 markdown(),
@@ -328,35 +359,10 @@ function mount(textarea) {
                 theme,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
-                        textarea.value = update.state.doc.toString();
+                        onChange(update.state.doc.toString());
                     }
                 }),
             ],
         }),
     });
 }
-
-document.querySelectorAll('textarea[data-markdown-editor]').forEach(mount);
-
-const categorySelect = document.querySelector('#category');
-const peopleDates = document.querySelector('#people-dates');
-
-if (categorySelect && peopleDates) {
-    categorySelect.addEventListener('change', () => {
-        peopleDates.hidden = categorySelect.value !== 'people';
-    });
-}
-
-document.querySelectorAll('[data-date-group]').forEach((group) => {
-    const unknown = group.querySelector('[data-date-unknown]');
-    const circa = group.querySelector('input[name$="_is_circa"]');
-    const parts = group.querySelectorAll('.date-fields input');
-
-    const sync = () => {
-        parts.forEach((input) => { input.disabled = unknown.checked; });
-        circa.disabled = unknown.checked;
-    };
-
-    unknown.addEventListener('change', sync);
-    sync();
-});

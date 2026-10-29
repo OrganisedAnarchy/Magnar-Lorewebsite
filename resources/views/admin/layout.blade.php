@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @vite(['resources/js/admin-editor.js'])
+    @vite(['resources/js/admin.js'])
     <title>@yield('title', 'Admin') · {{ config('app.name', 'The World of Magnar') }}</title>
     <style>
         body { font-family: system-ui, sans-serif; margin: 0; background: #14121a; color: #e8e4f0; }
@@ -40,6 +40,9 @@
         .date-control input { padding: 1.15rem .5rem .35rem; }
         .date-control label { position: absolute; top: 50%; left: .6rem; margin: 0; color: #9a93ad; font-size: .9rem; font-weight: 400; line-height: 1; pointer-events: none; transform: translateY(-50%); transition: top .15s ease, transform .15s ease, font-size .15s ease, color .15s ease; }
         .date-control input:focus + label, .date-control input:not(:placeholder-shown) + label { top: .25rem; color: #cdb8ff; font-size: .7rem; transform: none; }
+        .draft-banner { display: flex; gap: .75rem; align-items: center; padding: .5rem 1rem; background: #3a3014; border-radius: 4px; }
+        .link-button { background: none; border: 0; color: #cdb8ff; font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
+        .form-actions { display: flex; align-items: center; gap: 1rem; }
     </style>
     @stack('head')
 </head>

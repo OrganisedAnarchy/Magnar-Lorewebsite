@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\LoreEntryController;
+use App\Http\Controllers\Admin\OrganisationMemberController;
+use App\Http\Controllers\Admin\OrganisationRankController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CelestialBodyController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('entries/check', [LoreEntryController::class, 'check'])->name('entries.check');
     Route::post('entries/resolve', [LoreEntryController::class, 'resolve'])->name('entries.resolve');
     Route::resource('entries', LoreEntryController::class)->except('show');
+    Route::post('entries/{entry}/ranks', [OrganisationRankController::class, 'store'])->name('entries.ranks.store');
+    Route::delete('entries/{entry}/ranks/{rank}', [OrganisationRankController::class, 'destroy'])->name('entries.ranks.destroy');
+    Route::post('entries/{entry}/members', [OrganisationMemberController::class, 'store'])->name('entries.members.store');
+    Route::put('entries/{entry}/members/{member}', [OrganisationMemberController::class, 'update'])->name('entries.members.update');
+    Route::delete('entries/{entry}/members/{member}', [OrganisationMemberController::class, 'destroy'])->name('entries.members.destroy');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])

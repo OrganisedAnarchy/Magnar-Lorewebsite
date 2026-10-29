@@ -20,7 +20,7 @@
             @forelse ($entries as $entry)
                 <tr>
                     <td>{{ $entry->title }}</td>
-                    <td>{{ $entry->categoryLabel() }}</td>
+                    <td>{{ $entry->categoryLabel() }}@if ($entry->sub_category) — {{ $entry->sub_category }}@endif</td>
                     <td>
                         <a href="{{ route('admin.entries.edit', $entry) }}">Edit</a>
                         <form class="inline" method="POST" action="{{ route('admin.entries.destroy', $entry) }}" onsubmit="return confirm('Delete this entry?')">

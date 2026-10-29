@@ -13,7 +13,8 @@ class LoreEntryRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $normalized = [];
+        $subCategory = trim((string) $this->input('sub_category'));
+        $normalized = ['sub_category' => $subCategory === '' ? null : $subCategory];
 
         foreach (['dob', 'dod'] as $date) {
             $isUnknown = $this->boolean("{$date}_is_unknown");
@@ -38,6 +39,7 @@ class LoreEntryRequest extends FormRequest
     {
         $rules = [
             'category' => ['required', Rule::in(array_keys(LoreEntry::CATEGORIES))],
+            'sub_category' => ['nullable', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ];
