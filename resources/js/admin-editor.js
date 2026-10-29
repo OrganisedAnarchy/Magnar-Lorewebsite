@@ -346,3 +346,17 @@ if (categorySelect && peopleDates) {
         peopleDates.hidden = categorySelect.value !== 'people';
     });
 }
+
+document.querySelectorAll('[data-date-group]').forEach((group) => {
+    const unknown = group.querySelector('[data-date-unknown]');
+    const circa = group.querySelector('input[name$="_is_circa"]');
+    const parts = group.querySelectorAll('.date-fields input');
+
+    const sync = () => {
+        parts.forEach((input) => { input.disabled = unknown.checked; });
+        circa.disabled = unknown.checked;
+    };
+
+    unknown.addEventListener('change', sync);
+    sync();
+});

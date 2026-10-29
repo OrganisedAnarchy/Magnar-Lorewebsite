@@ -16,10 +16,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'dob_month',
     'dob_cycle',
     'dob_year',
+    'dob_is_circa',
+    'dob_is_unknown',
     'dod_day',
     'dod_month',
     'dod_cycle',
     'dod_year',
+    'dod_is_circa',
+    'dod_is_unknown',
 ])]
 class LoreEntry extends Model
 {

@@ -158,6 +158,88 @@ class AdminTest extends TestCase
         $this->assertDatabaseCount('lore_entries', 0);
     }
 
+    public function test_circa_dates_are_saved_with_their_components(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Old Sage',
+                'dob_day' => 5,
+                'dob_month' => 2,
+                'dob_cycle' => 1,
+                'dob_year' => 40,
+                'dob_is_circa' => '1',
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'title' => 'Old Sage',
+            'dob_year' => 40,
+            'dob_is_circa' => true,
+            'dod_is_circa' => false,
+        ]);
+    }
+
+    public function test_circa_requires_the_date_components(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Vague Sage',
+                'dod_is_circa' => '1',
+            ])
+            ->assertSessionHasErrors(['dod_day', 'dod_month', 'dod_cycle', 'dod_year']);
+
+        $this->assertDatabaseCount('lore_entries', 0);
+    }
+
+    public function test_unknown_dates_are_saved_without_components_or_circa(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'people',
+                'title' => 'Lost Spirit',
+                'dob_is_unknown' => '1',
+                'dob_is_circa' => '1',
+                'dob_day' => 9,
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'title' => 'Lost Spirit',
+            'dob_is_unknown' => true,
+            'dob_is_circa' => false,
+            'dob_day' => null,
+            'dob_year' => null,
+        ]);
+    }
+
+    public function test_marking_a_date_unknown_clears_its_saved_components(): void
+    {
+        $entry = LoreEntry::factory()->create([
+            'category' => 'people',
+            'dod_day' => 3,
+            'dod_month' => 4,
+            'dod_cycle' => 2,
+            'dod_year' => 90,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.entries.update', $entry), [
+                'category' => 'people',
+                'title' => $entry->title,
+                'dod_is_unknown' => '1',
+            ])
+            ->assertRedirect(route('admin.entries.index'));
+
+        $this->assertDatabaseHas('lore_entries', [
+            'id' => $entry->id,
+            'dod_is_unknown' => true,
+            'dod_day' => null,
+            'dod_year' => null,
+        ]);
+    }
+
     public function test_admin_can_update_people_dates(): void
     {
         $entry = LoreEntry::factory()->create(['category' => 'people']);

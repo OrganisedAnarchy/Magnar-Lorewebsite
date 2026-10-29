@@ -9,6 +9,29 @@ use Illuminate\Validation\Rule;
 class LoreEntryRequest extends FormRequest
 {
     /**
+     * An unknown date has no parts and cannot be circa.
+     */
+    protected function prepareForValidation(): void
+    {
+        $normalized = [];
+
+        foreach (['dob', 'dod'] as $date) {
+            $isUnknown = $this->boolean("{$date}_is_unknown");
+
+            $normalized["{$date}_is_unknown"] = $isUnknown;
+            $normalized["{$date}_is_circa"] = ! $isUnknown && $this->boolean("{$date}_is_circa");
+
+            if ($isUnknown) {
+                foreach (['day', 'month', 'cycle', 'year'] as $component) {
+                    $normalized["{$date}_{$component}"] = null;
+                }
+            }
+        }
+
+        $this->merge($normalized);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function rules(): array
@@ -32,11 +55,15 @@ class LoreEntryRequest extends FormRequest
                 $rules[$field] = [
                     'exclude_unless:category,people',
                     'nullable',
+                    Rule::requiredIf(fn (): bool => $this->boolean("{$date}_is_circa")),
                     'required_with:'.$otherFields,
                     'integer',
                     $range,
                 ];
             }
+
+            $rules["{$date}_is_circa"] = ['exclude_unless:category,people', 'boolean'];
+            $rules["{$date}_is_unknown"] = ['exclude_unless:category,people', 'boolean'];
         }
 
         return $rules;

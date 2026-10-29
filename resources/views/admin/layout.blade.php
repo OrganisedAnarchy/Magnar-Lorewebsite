@@ -26,8 +26,15 @@
         .filters a { padding: .25rem .75rem; border: 1px solid #3a3450; border-radius: 999px; color: #cdb8ff; text-decoration: none; font-size: .9rem; }
         .filters a.active { background: #6b4fd8; color: #fff; border-color: #6b4fd8; }
         .hint { color: #9a93ad; font-size: .85rem; }
+        .info-tip { position: relative; display: inline-block; margin-left: .35rem; }
+        .info-tip button { width: 1.2rem; height: 1.2rem; padding: 0; border: 1px solid #9a93ad; border-radius: 50%; background: none; color: #cdb8ff; font: italic 700 .75rem/1 serif; cursor: help; }
+        .info-tip .info-tip-text { display: none; position: absolute; left: 0; top: 1.6rem; z-index: 10; width: 22rem; max-width: 80vw; padding: .6rem .75rem; background: #1f1b2b; border: 1px solid #3a3450; border-radius: 4px; color: #e8e4f0; font: 400 .85rem/1.4 system-ui, sans-serif; }
+        .info-tip:hover .info-tip-text, .info-tip:focus-within .info-tip-text { display: block; }
         .date-group { margin-top: 1rem; border: 1px solid #3a3450; border-radius: 4px; }
         .date-group legend { color: #cdb8ff; font-weight: 600; }
+        .date-flags { display: flex; gap: 1.5rem; }
+        label.checkbox { display: flex; align-items: center; gap: .4rem; font-weight: 400; }
+        label.checkbox input { width: auto; }
         .date-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
         .date-control { position: relative; }
         .date-control input { padding: 1.15rem .5rem .35rem; }
