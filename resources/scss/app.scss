@@ -1125,6 +1125,10 @@ p {
     gap: 18px;
 }
 
+.hidden {
+    display: none;
+}
+
 @media (max-width: 760px) {
     .landing {
         padding: 0 6%;

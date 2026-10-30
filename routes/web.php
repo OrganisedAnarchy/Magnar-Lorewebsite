@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\BookController;
+use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LoreEntryController;
 use App\Http\Controllers\Admin\OrganisationMemberController;
 use App\Http\Controllers\Admin\OrganisationRankController;
@@ -24,6 +26,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('entries/check', [LoreEntryController::class, 'check'])->name('entries.check');
     Route::post('entries/resolve', [LoreEntryController::class, 'resolve'])->name('entries.resolve');
     Route::resource('entries', LoreEntryController::class)->except('show');
+    Route::resource('languages', LanguageController::class)->except('show');
+    Route::resource('books', BookController::class)->except('show');
     Route::post('entries/{entry}/ranks', [OrganisationRankController::class, 'store'])->name('entries.ranks.store');
     Route::delete('entries/{entry}/ranks/{rank}', [OrganisationRankController::class, 'destroy'])->name('entries.ranks.destroy');
     Route::post('entries/{entry}/members', [OrganisationMemberController::class, 'store'])->name('entries.members.store');

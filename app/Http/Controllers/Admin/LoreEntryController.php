@@ -34,8 +34,11 @@ class LoreEntryController extends Controller
     {
         $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim((string) $request->query('q')));
 
+        $category = LoreEntry::resolveCategory($request->string('category')->toString());
+
         $entries = LoreEntry::query()
             ->where('title', 'like', "%{$term}%")
+            ->when($category, fn ($query) => $query->where('category', $category))
             ->orderBy('title')
             ->limit(8)
             ->get();

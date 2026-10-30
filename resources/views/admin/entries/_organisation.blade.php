@@ -52,7 +52,7 @@
                     <td>{{ $membership->joinDateLabel() ?? 'Unknown' }}</td>
                     <td>{{ $membership->is_current ? 'Current' : 'Former' }}</td>
                     <td>
-                        <form method="POST" action="{{ route('admin.entries.members.update', [$entry, $membership]) }}">
+                        <form method="POST" class="edit-member-form hidden" action="{{ route('admin.entries.members.update', [$entry, $membership]) }}">
                             @csrf
                             @method('PUT')
                             <select name="organisation_rank_id" aria-label="Rank">
@@ -68,6 +68,7 @@
                             <label class="checkbox"><input type="checkbox" name="is_current" value="1" @checked($membership->is_current)> Current member</label>
                             <button class="btn" type="submit">Save</button>
                         </form>
+                        <button class="btn" type="button" onclick="this.closest('form').classList.remove('hidden'); this.closest('form').querySelector('select, input').focus()">Edit</button>
                         <form method="POST" action="{{ route('admin.entries.members.destroy', [$entry, $membership]) }}">
                             @csrf
                             @method('DELETE')

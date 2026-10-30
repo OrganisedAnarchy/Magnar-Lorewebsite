@@ -44,7 +44,6 @@ class LoreEntry extends Model
         'religion' => ['label' => 'Religion & Beliefs', 'examples' => 'Faiths, rituals, afterlife'],
         'technology' => ['label' => 'Technology & Craft', 'examples' => 'Inventions, engineering'],
         'items' => ['label' => 'Items & Artefacts', 'examples' => 'Relics, equipment, books'],
-        'languages' => ['label' => 'Languages & Writing', 'examples' => 'Conlangs, scripts, names'],
         'history' => ['label' => 'History & Events', 'examples' => 'Eras, wars, timelines'],
         'culture' => ['label' => 'Culture & Society', 'examples' => 'Customs, law, trade'],
         'cosmology' => ['label' => 'Cosmology', 'examples' => 'Reality, dimensions, fate'],
