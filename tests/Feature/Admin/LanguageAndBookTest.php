@@ -25,7 +25,11 @@ class LanguageAndBookTest extends TestCase
         $this->actingAs($admin)->post(route('admin.languages.store'), [
             'name' => 'Old Tongue',
             'phonemes' => ['p', 'a', 'a', 'ʃ'],
-            'syllables' => ['ka', 'to', 'ka'],
+            'syllables' => [
+                ['ipa' => 'ka', 'romanized' => 'ka'],
+                ['ipa' => 'ʃa', 'romanized' => 'sha'],
+                ['ipa' => 'ka', 'romanized' => 'ka'],
+            ],
             'grammar' => 'SOV',
             'writing_system' => 'Runic',
             'words' => [
@@ -36,7 +40,7 @@ class LanguageAndBookTest extends TestCase
 
         $language = Language::firstOrFail();
         $this->assertSame(['p', 'a', 'ʃ'], $language->phonemes);
-        $this->assertSame(['ka', 'to'], $language->syllables);
+        $this->assertSame([['ipa' => 'ka', 'romanized' => 'ka'], ['ipa' => 'ʃa', 'romanized' => 'sha']], $language->syllables);
         $this->assertSame('Runic', $language->writing_system);
         $this->assertCount(2, $language->words);
 
@@ -55,6 +59,13 @@ class LanguageAndBookTest extends TestCase
         $this->actingAs($admin)->delete(route('admin.languages.destroy', $language));
         $this->assertDatabaseCount('languages', 0);
         $this->assertDatabaseCount('language_words', 0);
+    }
+
+    public function test_language_syllables_require_a_romanization(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.languages.store'), ['name' => 'X', 'syllables' => [['ipa' => 'ka']]])
+            ->assertSessionHasErrors('syllables.0.romanized');
     }
 
     public function test_language_words_require_a_word(): void

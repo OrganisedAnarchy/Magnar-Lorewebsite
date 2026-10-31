@@ -57,8 +57,15 @@ class LanguageController extends Controller
         $words = $data['words'] ?? [];
         unset($data['words']);
 
-        $data['phonemes'] = array_values(array_unique($data['phonemes'] ?? []));
-        $data['syllables'] = array_values(array_unique($data['syllables'] ?? []));
+        $data['phonemes'] = array_values(array_unique($data['phonemes'] ?? $language->phonemes ?? []));
+        $data['syllables'] = collect($data['syllables'] ?? [])
+            ->map(fn (array $syllable): array => [
+                'ipa' => trim((string) ($syllable['ipa'] ?? '')),
+                'romanized' => trim($syllable['romanized']),
+            ])
+            ->unique(fn (array $syllable): string => $syllable['ipa'].'|'.$syllable['romanized'])
+            ->values()
+            ->all();
 
         DB::transaction(function () use ($language, $data, $words): void {
             $language->fill($data)->save();

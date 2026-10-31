@@ -53,6 +53,12 @@
         .tab { padding: .3rem .75rem; background: none; border: 1px solid #3a3450; border-radius: 999px; color: #cdb8ff; font: inherit; font-size: .9rem; cursor: pointer; }
         .tab.active { background: #6b4fd8; border-color: #6b4fd8; color: #fff; }
         .badge { margin-left: .25rem; padding: 0 .4rem; background: #14121a; border-radius: 999px; font-size: .75rem; }
+        .field-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+        .field-row input { flex: 1; min-width: 12rem; width: auto; }
+        .syllable-draft { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .75rem; }
+        .syllable-ipa { min-width: 4rem; font-size: 1.2rem; }
+        .syllable-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .5rem; margin-top: .5rem; }
+        .syllable-row { display: grid; grid-template-columns: 5rem 1fr auto; gap: .5rem; align-items: center; }
         .ipa-group { margin-top: .75rem; }
         .ipa-group-label { color: #9a93ad; font-size: .8rem; margin-bottom: .25rem; }
         .ipa-keys { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }

@@ -1,6 +1,10 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
-import { ipaCategories, knownSymbols } from './ipa-data.js';
+// Phonetics (IPA picker, sound playback, speech) is disabled for now: phonetics coming soon.
+// import IpaPicker from './ipa/IpaPicker.vue';
+// import { playIpa, playSequence } from './ipa/audio.js';
+// import { speakIpa, warmSpeech } from './ipa/espeak.js';
+// import { playSynth } from './ipa/synth.js';
 
 const props = defineProps({
     action: { type: String, required: true },
@@ -20,16 +24,18 @@ const form = reactive({
     writing_system: props.initial.writing_system ?? '',
 });
 
-const phonemes = ref([...(props.initial.phonemes ?? [])]);
-const syllableText = ref((props.initial.syllables ?? []).join(', '));
+// const phonemes = ref([...(props.initial.phonemes ?? [])]);
+// Syllables are entered as romanized text; any IPA saved earlier is carried along untouched.
+const syllables = ref((props.initial.syllables ?? []).map((item) => (
+    typeof item === 'string' ? { ipa: '', romanized: item } : { ipa: item.ipa ?? '', romanized: item.romanized ?? '' }
+)));
+const draftRomanized = ref('');
 const words = ref((props.initial.words ?? []).map((row) => ({
     word: row.word ?? '',
     meaning: row.meaning ?? '',
     notes: row.notes ?? '',
 })));
 
-const activeCategory = ref(ipaCategories[0].key);
-const customSymbol = ref('');
 const generator = reactive({ count: 40, maxSyllables: 3 });
 const generated = ref([]);
 const showMissing = ref(false);
@@ -39,32 +45,26 @@ const nestedErrors = (prefix) => Object.entries(props.errors)
     .filter(([key]) => key.startsWith(`${prefix}.`))
     .map(([, messages]) => messages[0]);
 
-const currentCategory = computed(() => ipaCategories.find((category) => category.key === activeCategory.value));
-const customSymbols = computed(() => phonemes.value.filter((symbol) => !knownSymbols.has(symbol)));
-const selectedCount = (category) => category.groups
-    .flatMap((group) => group.symbols)
-    .filter((symbol) => phonemes.value.includes(symbol)).length;
+const canAddSyllable = computed(() => draftRomanized.value.trim() !== '');
+const romanizedSyllables = computed(() => [...new Set(syllables.value.map((item) => item.romanized.trim()).filter(Boolean))]);
 
-const toggleSymbol = (symbol) => {
-    phonemes.value = phonemes.value.includes(symbol)
-        ? phonemes.value.filter((existing) => existing !== symbol)
-        : [...phonemes.value, symbol];
-};
-
-const addCustomSymbol = () => {
-    const symbol = customSymbol.value.trim();
-    if (symbol && !phonemes.value.includes(symbol)) {
-        phonemes.value = [...phonemes.value, symbol];
+const addSyllable = () => {
+    if (!canAddSyllable.value) {
+        return;
     }
-    customSymbol.value = '';
+    const romanized = draftRomanized.value.trim();
+    if (!syllables.value.some((item) => item.romanized.trim() === romanized)) {
+        syllables.value.push({ ipa: '', romanized });
+    }
+    draftRomanized.value = '';
 };
 
-const syllables = computed(() => [...new Set(syllableText.value.split(/[\s,;]+/).map((part) => part.trim()).filter(Boolean))]);
+const removeSyllable = (index) => syllables.value.splice(index, 1);
 
 const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
 
 const generateText = () => {
-    if (!syllables.value.length) {
+    if (!romanizedSyllables.value.length) {
         generated.value = [];
         return;
     }
@@ -72,7 +72,7 @@ const generateText = () => {
     const max = Math.min(Math.max(Number(generator.maxSyllables) || 1, 1), 8);
     generated.value = Array.from({ length: count }, () => {
         const length = 1 + Math.floor(Math.random() * max);
-        return Array.from({ length }, () => randomItem(syllables.value)).join('');
+        return Array.from({ length }, () => randomItem(romanizedSyllables.value)).join('');
     });
 };
 
@@ -138,68 +138,44 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
         </section>
 
+        <!-- Phonetics coming soon. Previous IPA phonology and IPA syllable builder removed from the UI for now.
         <section class="panel">
             <h2>Phonology (IPA)</h2>
-            <p class="hint">Pick the sounds this language uses. {{ phonemes.length }} selected.</p>
-
-            <div class="tabs" role="tablist">
-                <button
-                    v-for="category in ipaCategories"
-                    :key="category.key"
-                    type="button"
-                    role="tab"
-                    class="tab"
-                    :class="{ active: activeCategory === category.key }"
-                    :aria-selected="activeCategory === category.key"
-                    @click="activeCategory = category.key"
-                >
-                    {{ category.label }}
-                    <span v-if="selectedCount(category)" class="badge">{{ selectedCount(category) }}</span>
-                </button>
-            </div>
-
-            <div v-for="group in currentCategory.groups" :key="group.label" class="ipa-group">
-                <div class="ipa-group-label">{{ group.label }}</div>
-                <div class="ipa-keys">
-                    <button
-                        v-for="symbol in group.symbols"
-                        :key="symbol"
-                        type="button"
-                        class="ipa-key"
-                        :class="{ selected: phonemes.includes(symbol) }"
-                        :aria-pressed="phonemes.includes(symbol)"
-                        @click="toggleSymbol(symbol)"
-                    >{{ symbol }}</button>
-                </div>
-            </div>
-
-            <div class="ipa-group">
-                <div class="ipa-group-label">Custom symbols</div>
-                <div class="ipa-keys">
-                    <button v-for="symbol in customSymbols" :key="symbol" type="button" class="ipa-key selected" title="Remove" @click="toggleSymbol(symbol)">{{ symbol }}</button>
-                    <input v-model="customSymbol" class="ipa-custom" placeholder="Add symbol" maxlength="20" @keydown.enter.prevent="addCustomSymbol">
-                    <button type="button" class="btn small" @click="addCustomSymbol">Add</button>
-                </div>
-            </div>
-
-            <div class="phoneme-summary" aria-live="polite">
-                <strong>Inventory:</strong>
-                <span v-if="phonemes.length">/{{ phonemes.join(' ') }}/</span>
-                <span v-else class="hint">nothing selected yet</span>
-            </div>
-            <input v-for="symbol in phonemes" :key="symbol" type="hidden" name="phonemes[]" :value="symbol">
-            <div v-for="message in nestedErrors('phonemes')" :key="message" class="error">{{ message }}</div>
+            <IpaPicker v-model="phonemes" name="phonemes" :errors="nestedErrors('phonemes')" />
 
             <label for="phonology_notes">Phonology notes</label>
             <textarea id="phonology_notes" v-model="form.phonology_notes" name="phonology_notes" class="short" placeholder="Allophony, stress, tone, phonotactics…" />
         </section>
+        -->
+
+        <section class="panel">
+            <h2>Phonology</h2>
+            <p class="hint">Phonetics coming soon.</p>
+        </section>
 
         <section class="panel">
             <h2>Syllables</h2>
-            <label for="syllables">Syllable inventory <span class="hint">(separate with commas or spaces)</span></label>
-            <textarea id="syllables" v-model="syllableText" class="short" placeholder="ka, to, mi, ren, sha" />
+            <p class="hint">Enter each syllable as written, e.g. <em>Le</em> or <em>Mon</em>.</p>
+
+            <div class="field-row">
+                <input id="draft-romanized" v-model="draftRomanized" maxlength="20" autocomplete="off" aria-label="New syllable" placeholder="e.g. Le" @keydown.enter.prevent="addSyllable">
+                <button type="button" class="btn small" :disabled="!canAddSyllable" @click="addSyllable">Add syllable</button>
+            </div>
+
             <p class="hint">{{ syllables.length }} syllable{{ syllables.length === 1 ? '' : 's' }}</p>
-            <input v-for="syllable in syllables" :key="syllable" type="hidden" name="syllables[]" :value="syllable">
+            <div v-if="syllables.length" class="syllable-list">
+                <div v-for="(item, index) in syllables" :key="index" class="syllable-row">
+                    <input v-model="item.romanized" maxlength="20" aria-label="Syllable">
+                    <button type="button" class="btn btn-danger small" aria-label="Remove syllable" @click="removeSyllable(index)">✕</button>
+                </div>
+            </div>
+
+            <template v-for="(item, index) in syllables" :key="`syllable-${index}`">
+                <template v-if="item.romanized.trim()">
+                    <input type="hidden" :name="`syllables[${index}][ipa]`" :value="item.ipa">
+                    <input type="hidden" :name="`syllables[${index}][romanized]`" :value="item.romanized.trim()">
+                </template>
+            </template>
             <div v-for="message in nestedErrors('syllables')" :key="message" class="error">{{ message }}</div>
         </section>
 
@@ -213,9 +189,9 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
                 <label class="inline-field">Max syllables per word
                     <input v-model.number="generator.maxSyllables" type="number" min="1" max="8">
                 </label>
-                <button type="button" class="btn small" :disabled="!syllables.length" @click="generateText">Generate</button>
+                <button type="button" class="btn small" :disabled="!romanizedSyllables.length" @click="generateText">Generate</button>
             </div>
-            <p v-if="!syllables.length" class="hint">Add some syllables first.</p>
+            <p v-if="!romanizedSyllables.length" class="hint">Add some syllables first.</p>
             <div v-if="generated.length" class="word-chips">
                 <button
                     v-for="(word, index) in generated"
