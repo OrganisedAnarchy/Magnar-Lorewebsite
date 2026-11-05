@@ -4,17 +4,64 @@ namespace App\Models;
 
 use Database\Factories\LocationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'description', 'parent_id', 'map_image_path', 'pin_x', 'pin_y'])]
+#[Fillable(['name', 'description', 'summary', 'celestial_kind', 'parent_id', 'map_image_path', 'pin_x', 'pin_y'])]
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
     use HasFactory;
+
+    public const CELESTIAL_KINDS = ['Planet', 'Moon', 'Sun'];
+
+    public function isCelestialBody(): bool
+    {
+        return filled($this->celestial_slug);
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeCelestialBodies(Builder $query): Builder
+    {
+        return $query->whereNotNull('celestial_slug');
+    }
+
+    /**
+     * The celestial bodies keyed by slug, as shown on the interactive system chart.
+     *
+     * @return array<string, array{slug: string, name: string, kind: ?string, summary: ?string}>
+     */
+    public static function celestialChartData(): array
+    {
+        return self::query()->celestialBodies()->get()
+            ->mapWithKeys(fn (self $body): array => [$body->celestial_slug => [
+                'slug' => $body->celestial_slug,
+                'name' => $body->name,
+                'kind' => $body->celestial_kind,
+                'summary' => $body->summary,
+            ]])
+            ->all();
+    }
+
+    /**
+     * The lore split into paragraphs on blank lines.
+     *
+     * @return list<string>
+     */
+    public function loreParagraphs(): array
+    {
+        return array_values(array_filter(
+            array_map('trim', preg_split('/\R{2,}/', (string) $this->description)),
+            filled(...),
+        ));
+    }
 
     /**
      * @return array<string, string>

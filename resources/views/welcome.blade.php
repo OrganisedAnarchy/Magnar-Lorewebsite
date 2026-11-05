@@ -13,7 +13,7 @@
         data-authenticated="{{ auth()->check() ? 'true' : 'false' }}"
         data-admin="{{ auth()->user()?->is_admin ? 'true' : 'false' }}"
         data-user-name="{{ auth()->user()?->name }}"
-        data-celestial-bodies="{{ json_encode(config('celestial-bodies')) }}"
+        data-celestial-bodies="{{ json_encode(\App\Models\Location::celestialChartData()) }}"
     ></div>
 </body>
 </html>

@@ -53,6 +53,14 @@ class LocationController extends Controller
 
     public function destroy(Request $request, Location $location): JsonResponse|RedirectResponse
     {
+        if ($location->isCelestialBody()) {
+            $message = 'Celestial bodies are part of the system chart and cannot be deleted.';
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->withErrors(['delete' => $message]);
+        }
+
         if ($location->children()->exists()) {
             $message = 'Move or delete this location\'s children first.';
 
@@ -102,6 +110,10 @@ class LocationController extends Controller
     private function persist(Location $location, LocationRequest $request): void
     {
         $data = $request->safe()->only(['name', 'description', 'parent_id', 'pin_x', 'pin_y']);
+
+        if ($location->isCelestialBody()) {
+            $data = [...$data, ...$request->safe()->only(['summary', 'celestial_kind']), 'parent_id' => null, 'pin_x' => null, 'pin_y' => null];
+        }
 
         if ($request->hasFile('map')) {
             $this->deleteMap($location);

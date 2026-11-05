@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * Initial lore for the celestial bodies. It is copied into the locations table by the
+ * add_celestial_body_fields_to_locations_table migration; edit the lore in the admin afterwards.
+ */
 return [
     'magnar' => [
         'slug' => 'magnar',

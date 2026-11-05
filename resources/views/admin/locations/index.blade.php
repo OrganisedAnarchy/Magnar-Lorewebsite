@@ -14,17 +14,19 @@
             <tbody>
                 @forelse ($locations as $location)
                     <tr>
-                        <td>{{ $location->name }}</td>
+                        <td>{{ $location->name }}@if ($location->isCelestialBody()) <span class="hint">({{ $location->celestial_kind }})</span>@endif</td>
                         <td>{{ $location->parent?->name }}</td>
                         <td>{{ $location->hasMap() ? 'Yes' : 'No' }}</td>
                         <td>{{ $location->children_count }}</td>
                         <td>
                             <a href="{{ route('admin.locations.edit', $location) }}">Edit</a>
-                            <form class="inline" method="POST" action="{{ route('admin.locations.destroy', $location) }}" data-ajax data-remove="tr" data-confirm="Delete this location?">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-danger" type="submit">Delete</button>
-                            </form>
+                            @unless ($location->isCelestialBody())
+                                <form class="inline" method="POST" action="{{ route('admin.locations.destroy', $location) }}" data-ajax data-remove="tr" data-confirm="Delete this location?">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-danger" type="submit">Delete</button>
+                                </form>
+                            @endunless
                         </td>
                     </tr>
                 @empty

@@ -10,7 +10,9 @@ class LocationMapController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'locations' => Location::query()->whereNull('parent_id')->orderBy('name')->get()
+            'locations' => Location::query()->whereNull('parent_id')
+                ->where(fn ($query) => $query->whereNull('celestial_slug')->orWhereNotNull('map_image_path'))
+                ->orderBy('name')->get()
                 ->map(fn (Location $location): array => $this->summary($location))
                 ->all(),
         ]);

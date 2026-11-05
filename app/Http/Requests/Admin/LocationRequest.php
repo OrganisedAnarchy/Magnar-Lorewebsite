@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Location;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class LocationRequest extends FormRequest
 {
@@ -12,9 +13,16 @@ class LocationRequest extends FormRequest
     {
         $this->merge(['remove_map' => $this->boolean('remove_map')]);
 
-        if (blank($this->input('parent_id'))) {
+        if (blank($this->input('parent_id')) || $this->celestialBody() !== null) {
             $this->merge(['parent_id' => null, 'pin_x' => null, 'pin_y' => null]);
         }
+    }
+
+    private function celestialBody(): ?Location
+    {
+        $location = $this->route('location');
+
+        return $location instanceof Location && $location->isCelestialBody() ? $location : null;
     }
 
     /**
@@ -22,7 +30,13 @@ class LocationRequest extends FormRequest
      */
     public function rules(): array
     {
+        $celestialRules = $this->celestialBody() === null ? [] : [
+            'summary' => ['required', 'string', 'max:1000'],
+            'celestial_kind' => ['required', Rule::in(Location::CELESTIAL_KINDS)],
+        ];
+
         return [
+            ...$celestialRules,
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'integer', 'exists:locations,id'],

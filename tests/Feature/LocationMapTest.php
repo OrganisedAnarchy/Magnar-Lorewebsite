@@ -71,7 +71,7 @@ class LocationMapTest extends TestCase
         $migration = require database_path('migrations/2026_11_01_000002_move_places_lore_entries_to_locations.php');
         $migration->up();
 
-        $this->assertDatabaseCount('locations', 2);
+        $this->assertDatabaseCount('locations', 2 + count(config('celestial-bodies')));
         $this->assertDatabaseHas('locations', [
             'name' => 'Lomile',
             'description' => 'A port town.',

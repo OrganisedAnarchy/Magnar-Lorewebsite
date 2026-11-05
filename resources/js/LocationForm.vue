@@ -13,6 +13,8 @@ const props = defineProps({
     initial: { type: Object, required: true },
     currentMapUrl: { type: String, default: null },
     hasChildren: { type: Boolean, default: false },
+    isCelestialBody: { type: Boolean, default: false },
+    celestialKinds: { type: Array, default: () => [] },
     parentOptions: { type: Array, default: () => [] },
     errors: { type: Object, default: () => ({}) },
     cancelUrl: { type: String, required: true },
@@ -25,6 +27,8 @@ const form = reactive({
     pin_x: props.initial.pin_x ?? '',
     pin_y: props.initial.pin_y ?? '',
     remove_map: Boolean(props.initial.remove_map),
+    summary: props.initial.summary ?? '',
+    celestial_kind: props.initial.celestial_kind ?? '',
 });
 
 // The chosen map file can't be kept in a draft, so only the text fields, parent and pin are restored.
@@ -95,19 +99,35 @@ const onParentChange = () => {
         <input id="name" name="name" v-model="form.name" maxlength="255" required>
         <div v-if="error('name')" class="error">{{ error('name') }}</div>
 
+        <template v-if="isCelestialBody">
+            <label for="celestial_kind">Kind of celestial body</label>
+            <select id="celestial_kind" name="celestial_kind" v-model="form.celestial_kind" required>
+                <option v-for="kind in celestialKinds" :key="kind" :value="kind">{{ kind }}</option>
+            </select>
+            <div v-if="error('celestial_kind')" class="error">{{ error('celestial_kind') }}</div>
+
+            <label for="summary">Summary</label>
+            <textarea id="summary" name="summary" v-model="form.summary" rows="3" maxlength="1000" required></textarea>
+            <p class="hint">Shown when hovering the body on the celestial chart.</p>
+            <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
+        </template>
+
         <label for="description">Lore</label>
         <textarea id="description" name="description" v-model="form.description" rows="8"></textarea>
+        <p v-if="isCelestialBody" class="hint">Separate paragraphs with a blank line.</p>
         <div v-if="error('description')" class="error">{{ error('description') }}</div>
 
-        <label for="parent_id">Located inside</label>
-        <select id="parent_id" name="parent_id" v-model="form.parent_id" @change="onParentChange">
-            <option value="">Top level (no parent)</option>
-            <option v-for="option in parentOptions" :key="option.id" :value="String(option.id)">{{ option.name }}</option>
-        </select>
-        <p class="hint">Only locations that have a map can contain other locations.</p>
-        <div v-if="error('parent_id')" class="error">{{ error('parent_id') }}</div>
+        <template v-if="!isCelestialBody">
+            <label for="parent_id">Located inside</label>
+            <select id="parent_id" name="parent_id" v-model="form.parent_id" @change="onParentChange">
+                <option value="">Top level (no parent)</option>
+                <option v-for="option in parentOptions" :key="option.id" :value="String(option.id)">{{ option.name }}</option>
+            </select>
+            <p class="hint">Only locations that have a map can contain other locations. Celestial bodies with a map can be chosen too.</p>
+            <div v-if="error('parent_id')" class="error">{{ error('parent_id') }}</div>
+        </template>
 
-        <template v-if="form.parent_id">
+        <template v-if="form.parent_id && !isCelestialBody">
             <label>Pin position on the parent's map</label>
             <p class="hint">Click the map to place this location's pin.</p>
             <div class="pin-picker" @click="placePin">
