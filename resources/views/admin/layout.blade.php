@@ -48,6 +48,14 @@
         .panel h2 { font-size: 1.1rem; color: #cdb8ff; }
         textarea.short { min-height: 6rem; }
         .btn.small { margin-top: 0; padding: .3rem .7rem; font-size: .9rem; }
+        .btn-secondary { background: #3a3450; }
+        .row-actions { display: flex; gap: .5rem; align-items: center; }
+        .row-actions form { margin: 0; }
+        dialog.edit-dialog { width: min(32rem, 92vw); padding: 1rem 1.5rem 1.5rem; background: #1f1b2b; color: #e8e4f0; border: 1px solid #3a3450; border-radius: 6px; }
+        dialog.edit-dialog::backdrop { background: rgba(0, 0, 0, .6); }
+        dialog.edit-dialog h3 { margin-top: 0; color: #cdb8ff; }
+        dialog.edit-dialog .form-actions { margin-top: 1rem; }
+        dialog.edit-dialog .form-actions .btn { margin-top: 0; }
         .btn:disabled { opacity: .5; cursor: not-allowed; }
         .tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 1rem; }
         .tab { padding: .3rem .75rem; background: none; border: 1px solid #3a3450; border-radius: 999px; color: #cdb8ff; font: inherit; font-size: .9rem; cursor: pointer; }
