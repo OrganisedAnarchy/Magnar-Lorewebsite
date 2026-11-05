@@ -13,8 +13,11 @@ const props = defineProps({
     initial: { type: Object, required: true },
     currentMapUrl: { type: String, default: null },
     hasChildren: { type: Boolean, default: false },
-    isCelestialBody: { type: Boolean, default: false },
+    isChartBody: { type: Boolean, default: false },
     celestialKinds: { type: Array, default: () => [] },
+    locationTypes: { type: Array, default: () => [] },
+    buildingType: { type: String, default: 'Building' },
+    settlementType: { type: String, default: 'Religious Settlement' },
     parentOptions: { type: Array, default: () => [] },
     errors: { type: Object, default: () => ({}) },
     cancelUrl: { type: String, required: true },
@@ -29,7 +32,13 @@ const form = reactive({
     remove_map: Boolean(props.initial.remove_map),
     summary: props.initial.summary ?? '',
     celestial_kind: props.initial.celestial_kind ?? '',
+    is_celestial_body: Boolean(props.initial.is_celestial_body),
+    location_type: props.initial.location_type ?? '',
+    building_type: props.initial.building_type ?? '',
+    settlement_type: props.initial.settlement_type ?? '',
 });
+
+const isCelestialBody = computed(() => form.is_celestial_body);
 
 // The chosen map file can't be kept in a draft, so only the text fields, parent and pin are restored.
 const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
@@ -99,9 +108,18 @@ const onParentChange = () => {
         <input id="name" name="name" v-model="form.name" maxlength="255" required>
         <div v-if="error('name')" class="error">{{ error('name') }}</div>
 
+        <label class="checkbox">
+            <input type="hidden" name="is_celestial_body" value="0">
+            <input type="checkbox" name="is_celestial_body" value="1" v-model="form.is_celestial_body" :disabled="isChartBody">
+            Is celestial body<span v-if="isChartBody" class="hint"> (always on for bodies on the celestial chart)</span>
+        </label>
+        <input v-if="isChartBody" type="hidden" name="is_celestial_body" value="1">
+        <div v-if="error('is_celestial_body')" class="error">{{ error('is_celestial_body') }}</div>
+
         <template v-if="isCelestialBody">
             <label for="celestial_kind">Kind of celestial body</label>
             <select id="celestial_kind" name="celestial_kind" v-model="form.celestial_kind" required>
+                <option value="" disabled>Choose a kind</option>
                 <option v-for="kind in celestialKinds" :key="kind" :value="kind">{{ kind }}</option>
             </select>
             <div v-if="error('celestial_kind')" class="error">{{ error('celestial_kind') }}</div>
@@ -110,6 +128,27 @@ const onParentChange = () => {
             <textarea id="summary" name="summary" v-model="form.summary" rows="3" maxlength="1000" required></textarea>
             <p class="hint">Shown when hovering the body on the celestial chart.</p>
             <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
+        </template>
+
+        <template v-else>
+            <label for="location_type">Type of location</label>
+            <select id="location_type" name="location_type" v-model="form.location_type">
+                <option value="">Not specified</option>
+                <option v-for="type in locationTypes" :key="type" :value="type">{{ type }}</option>
+            </select>
+            <div v-if="error('location_type')" class="error">{{ error('location_type') }}</div>
+
+            <template v-if="form.location_type === buildingType">
+                <label for="building_type">Type of building</label>
+                <input id="building_type" name="building_type" v-model="form.building_type" maxlength="255">
+                <div v-if="error('building_type')" class="error">{{ error('building_type') }}</div>
+            </template>
+
+            <template v-if="form.location_type === settlementType">
+                <label for="settlement_type">Type of settlement</label>
+                <input id="settlement_type" name="settlement_type" v-model="form.settlement_type" maxlength="255">
+                <div v-if="error('settlement_type')" class="error">{{ error('settlement_type') }}</div>
+            </template>
         </template>
 
         <label for="description">Lore</label>

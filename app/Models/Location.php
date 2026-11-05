@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'description', 'summary', 'celestial_kind', 'parent_id', 'map_image_path', 'pin_x', 'pin_y'])]
+#[Fillable(['name', 'description', 'is_celestial_body', 'summary', 'celestial_kind', 'location_type', 'building_type', 'settlement_type', 'parent_id', 'map_image_path', 'pin_x', 'pin_y'])]
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
@@ -19,7 +19,21 @@ class Location extends Model
 
     public const CELESTIAL_KINDS = ['Planet', 'Moon', 'Sun'];
 
+    public const TYPE_BUILDING = 'Building';
+
+    public const TYPE_RELIGIOUS_SETTLEMENT = 'Religious Settlement';
+
+    public const LOCATION_TYPES = ['Continent', 'Country', 'City', 'Town', 'Village', self::TYPE_BUILDING, self::TYPE_RELIGIOUS_SETTLEMENT];
+
     public function isCelestialBody(): bool
+    {
+        return (bool) $this->is_celestial_body;
+    }
+
+    /**
+     * Whether this is one of the bodies on the system chart, which cannot be deleted or stop being celestial.
+     */
+    public function isChartBody(): bool
     {
         return filled($this->celestial_slug);
     }
@@ -69,6 +83,7 @@ class Location extends Model
     protected function casts(): array
     {
         return [
+            'is_celestial_body' => 'boolean',
             'pin_x' => 'float',
             'pin_y' => 'float',
         ];

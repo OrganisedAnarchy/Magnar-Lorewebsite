@@ -1,1 +1,10 @@
-Implement a frontend for navigating the lore.
+//todo: Implement a frontend for navigating the lore.
+//todo: Implement the player character management system
+//todo: Add tags to all lore systems, and implement filtering by tags.
+//todo: Add hidden lore subjects and what tags they are locked behind
+//todo: Implement a system for giving tag permissions to players.
+//todo: Implement a system to mark lore subjects as needs-updating.
+//todo: When using a wiki link, it should mark the referenced lore subject as needing update.
+//todo: When a piece of lore gets flagged for update, it should say why it needs updating.
+//todo: Implement a system to notify players when lore they have access to is updated.
+//todo: Implement a storyteller system so that storytellers can create and update lore.

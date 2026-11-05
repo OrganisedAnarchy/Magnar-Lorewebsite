@@ -11,18 +11,28 @@ class LocationRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge(['remove_map' => $this->boolean('remove_map')]);
+        $isCelestialBody = $this->boolean('is_celestial_body') || $this->chartBody() !== null;
 
-        if (blank($this->input('parent_id')) || $this->celestialBody() !== null) {
+        $this->merge(['remove_map' => $this->boolean('remove_map'), 'is_celestial_body' => $isCelestialBody]);
+
+        if (blank($this->input('parent_id')) || $isCelestialBody) {
             $this->merge(['parent_id' => null, 'pin_x' => null, 'pin_y' => null]);
         }
+
+        $locationType = $this->input('location_type');
+
+        $this->merge([
+            'location_type' => $isCelestialBody ? null : $locationType,
+            'building_type' => $isCelestialBody || $locationType !== Location::TYPE_BUILDING ? null : $this->input('building_type'),
+            'settlement_type' => $isCelestialBody || $locationType !== Location::TYPE_RELIGIOUS_SETTLEMENT ? null : $this->input('settlement_type'),
+        ]);
     }
 
-    private function celestialBody(): ?Location
+    private function chartBody(): ?Location
     {
         $location = $this->route('location');
 
-        return $location instanceof Location && $location->isCelestialBody() ? $location : null;
+        return $location instanceof Location && $location->isChartBody() ? $location : null;
     }
 
     /**
@@ -30,13 +40,18 @@ class LocationRequest extends FormRequest
      */
     public function rules(): array
     {
-        $celestialRules = $this->celestialBody() === null ? [] : [
+        $typeRules = $this->boolean('is_celestial_body') ? [
             'summary' => ['required', 'string', 'max:1000'],
             'celestial_kind' => ['required', Rule::in(Location::CELESTIAL_KINDS)],
+        ] : [
+            'location_type' => ['nullable', Rule::in(Location::LOCATION_TYPES)],
+            'building_type' => ['nullable', 'string', 'max:255'],
+            'settlement_type' => ['nullable', 'string', 'max:255'],
         ];
 
         return [
-            ...$celestialRules,
+            ...$typeRules,
+            'is_celestial_body' => ['boolean'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'integer', 'exists:locations,id'],

@@ -53,7 +53,7 @@ class LocationController extends Controller
 
     public function destroy(Request $request, Location $location): JsonResponse|RedirectResponse
     {
-        if ($location->isCelestialBody()) {
+        if ($location->isChartBody()) {
             $message = 'Celestial bodies are part of the system chart and cannot be deleted.';
 
             return $request->expectsJson()
@@ -109,10 +109,26 @@ class LocationController extends Controller
 
     private function persist(Location $location, LocationRequest $request): void
     {
-        $data = $request->safe()->only(['name', 'description', 'parent_id', 'pin_x', 'pin_y']);
+        $data = $request->safe()->only(['name', 'description', 'is_celestial_body', 'parent_id', 'pin_x', 'pin_y']);
 
-        if ($location->isCelestialBody()) {
-            $data = [...$data, ...$request->safe()->only(['summary', 'celestial_kind']), 'parent_id' => null, 'pin_x' => null, 'pin_y' => null];
+        if ($request->boolean('is_celestial_body')) {
+            $data = [
+                ...$data,
+                ...$request->safe()->only(['summary', 'celestial_kind']),
+                'location_type' => null,
+                'building_type' => null,
+                'settlement_type' => null,
+                'parent_id' => null,
+                'pin_x' => null,
+                'pin_y' => null,
+            ];
+        } else {
+            $data = [
+                ...$data,
+                ...$request->safe()->only(['location_type', 'building_type', 'settlement_type']),
+                'summary' => null,
+                'celestial_kind' => null,
+            ];
         }
 
         if ($request->hasFile('map')) {
