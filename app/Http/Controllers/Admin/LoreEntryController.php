@@ -34,6 +34,18 @@ class LoreEntryController extends Controller
     {
         $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim((string) $request->query('q')));
 
+        if ($type = LoreEntry::resolveLinkType($request->string('category')->toString())) {
+            return response()->json(
+                $type['model']::query()
+                    ->where($type['column'], 'like', "%{$term}%")
+                    ->orderBy($type['column'])
+                    ->limit(8)
+                    ->pluck($type['column'])
+                    ->map(fn (string $title): array => ['title' => $title, 'category' => $type['label']])
+                    ->values()
+            );
+        }
+
         $category = LoreEntry::resolveCategory($request->string('category')->toString());
 
         $entries = LoreEntry::query()
@@ -87,6 +99,22 @@ class LoreEntryController extends Controller
         ]);
 
         $title = trim($data['title']);
+
+        if ($type = LoreEntry::resolveLinkType($data['category'] ?? null)) {
+            $record = $type['model']::query()
+                ->whereRaw("lower({$type['column']}) = ?", [mb_strtolower($title)])
+                ->orderBy('id')
+                ->first();
+
+            $created = $record === null;
+            $record ??= $type['model']::create([$type['column'] => $title]);
+
+            return response()->json([
+                'created' => $created,
+                'url' => route($type['route'], $record),
+            ]);
+        }
+
         $requested = filled($data['category'] ?? null) ? LoreEntry::resolveCategory($data['category']) : null;
 
         if (filled($data['category'] ?? null) && $requested === null) {

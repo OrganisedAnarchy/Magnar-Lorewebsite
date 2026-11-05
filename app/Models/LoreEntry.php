@@ -90,8 +90,46 @@ class LoreEntry extends Model
             ->all();
     }
 
+    /**
+     * Wikilink categories that point at their own tables instead of lore entries.
+     *
+     * @return array<string, array{label: string, model: class-string<Model>, column: string, route: string}>
+     */
+    public static function linkTypes(): array
+    {
+        return [
+            'locations' => ['label' => 'Locations', 'model' => Location::class, 'column' => 'name', 'route' => 'admin.locations.edit'],
+            'languages' => ['label' => 'Languages', 'model' => Language::class, 'column' => 'name', 'route' => 'admin.languages.edit'],
+            'books' => ['label' => 'Books', 'model' => Book::class, 'column' => 'title', 'route' => 'admin.books.edit'],
+        ];
+    }
+
+    /**
+     * Match a link type by plural or singular name (case-insensitive), e.g. "Location" or "books".
+     *
+     * @return ?array{label: string, model: class-string<Model>, column: string, route: string}
+     */
+    public static function resolveLinkType(?string $value): ?array
+    {
+        $value = mb_strtolower(trim((string) $value));
+
+        foreach (self::linkTypes() as $key => $type) {
+            if ($value === $key || $value === rtrim($key, 's')) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
     public static function linkExists(string $title, ?string $category): bool
     {
+        if ($type = self::resolveLinkType($category)) {
+            return $type['model']::query()
+                ->whereRaw("lower({$type['column']}) = ?", [mb_strtolower(trim($title))])
+                ->exists();
+        }
+
         $resolved = filled($category) ? self::resolveCategory($category) : null;
 
         if (filled($category) && $resolved === null) {

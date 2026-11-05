@@ -11,6 +11,7 @@ const props = defineProps({
     initial: { type: Object, required: true },
     errors: { type: Object, default: () => ({}) },
     categories: { type: Object, required: true },
+    linkTypes: { type: Array, default: () => [] },
     subCategories: { type: Object, default: () => ({}) },
     urls: { type: Object, required: true },
     linkStatuses: { type: Array, default: () => [] },
@@ -119,7 +120,7 @@ onMounted(() => {
         searchUrl: props.urls.search,
         resolveUrl: props.urls.resolve,
         checkUrl: props.urls.check,
-        categories: Object.values(props.categories).map((info) => info.label),
+        categories: [...Object.values(props.categories).map((info) => info.label), ...props.linkTypes],
         linkStatuses: props.linkStatuses,
     });
     window.addEventListener('beforeunload', flush);
@@ -201,7 +202,7 @@ const error = (name) => props.errors[name]?.[0];
             <label>Description
                 <span class="info-tip">
                     <button type="button" aria-label="Markdown and linking help" aria-describedby="description-help">i</button>
-                    <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
+                    <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
                 </span>
             </label>
             <div ref="editorHost" />

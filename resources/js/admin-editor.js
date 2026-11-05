@@ -210,11 +210,86 @@ function wikilinkAt(view, pos) {
         if (pos >= start && pos <= start + match[0].length) {
             const { title, category } = parseWikilink(match[1]);
 
-            return { title, category };
+            return { title, category, to: start + match[0].length };
         }
     }
 
     return null;
+}
+
+// Small popup next to the click asking which type a new link should be created as.
+function pickCategory(x, y, options) {
+    return new Promise((resolve) => {
+        const menu = document.createElement('div');
+        Object.assign(menu.style, {
+            position: 'fixed', left: `${x}px`, top: `${y}px`, zIndex: 10000, background: '#1f1b2b', color: '#e8e4f0',
+            border: '1px solid #3a3450', borderRadius: '4px', padding: '.25rem', maxHeight: '50vh', overflowY: 'auto', font: '14px system-ui, sans-serif',
+        });
+        const search = document.createElement('input');
+        search.type = 'search';
+        search.placeholder = 'Create this link as… (type to search)';
+        Object.assign(search.style, { display: 'block', width: '16rem', boxSizing: 'border-box', margin: '.25rem', padding: '.35rem .5rem', background: '#2a2540', color: 'inherit', border: '1px solid #3a3450', borderRadius: '4px' });
+        const list = document.createElement('div');
+        menu.append(search, list);
+
+        const close = (value) => {
+            document.removeEventListener('mousedown', outside, true);
+            menu.remove();
+            resolve(value);
+        };
+        const outside = (event) => {
+            if (!menu.contains(event.target)) {
+                close(null);
+            }
+        };
+
+        let matches = [];
+        let active = 0;
+        const highlight = () => {
+            [...list.children].forEach((button, index) => {
+                button.style.background = index === active ? '#6b4fd8' : 'none';
+            });
+        };
+        const render = () => {
+            const term = search.value.trim().toLowerCase();
+            matches = options.filter((label) => label.toLowerCase().includes(term));
+            active = Math.min(active, Math.max(matches.length - 1, 0));
+            list.replaceChildren(...matches.map((label, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = label;
+                Object.assign(button.style, { display: 'block', width: '100%', textAlign: 'left', border: '0', color: 'inherit', padding: '.25rem .5rem', cursor: 'pointer' });
+                button.onmouseenter = () => { active = index; highlight(); };
+                button.onmousedown = (event) => {
+                    event.preventDefault();
+                    close(label);
+                };
+                return button;
+            }));
+            highlight();
+        };
+
+        search.addEventListener('input', () => { active = 0; render(); });
+        search.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                close(null);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (matches[active]) {
+                    close(matches[active]);
+                }
+            } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                active = (active + (event.key === 'ArrowDown' ? 1 : -1) + matches.length) % Math.max(matches.length, 1);
+                render();
+            }
+        });
+
+        render();
+        document.body.append(menu);
+        document.addEventListener('mousedown', outside, true);
+        search.focus();
+    });
 }
 
 // Typing "[" over a selection wraps it (selection is kept, so a second "[" nests);
@@ -303,7 +378,17 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
         };
     };
 
-    const openLink = async (link, view) => {
+    const openLink = async (link, view, point) => {
+        // An uncategorised link that doesn't exist yet: ask what to create, then write it into the link.
+        if (!link.category && linkStatus.get(linkKey(link)) !== true) {
+            const chosen = await pickCategory(point.x, point.y, categories);
+            if (!chosen) {
+                return;
+            }
+            view.dispatch({ changes: { from: link.to - 2, insert: `@${chosen}` }, userEvent: 'input' });
+            link = { title: link.title, category: chosen };
+        }
+
         const tab = window.open('', '_blank');
         try {
             const response = await fetch(resolveUrl, {
@@ -315,7 +400,11 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
             if (!response.ok) {
                 throw new Error(data.message ?? 'Could not open that link.');
             }
-            tab.location = data.url;
+            if (tab) {
+                tab.location = data.url;
+            } else {
+                window.open(data.url, '_blank');
+            }
             linkStatus.set(linkKey(link), true);
             view.dispatch({ effects: linksChecked.of(null) });
         } catch (error) {
@@ -335,7 +424,7 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
                 return false;
             }
             event.preventDefault();
-            openLink(link, view);
+            openLink(link, view, { x: event.clientX, y: event.clientY });
 
             return true;
         },

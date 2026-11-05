@@ -22,6 +22,7 @@
         'initial' => $initial,
         'errors' => $errors->getMessages(),
         'categories' => \App\Models\LoreEntry::CATEGORIES,
+        'linkTypes' => collect(\App\Models\LoreEntry::linkTypes())->pluck('label')->values(),
         'subCategories' => \App\Models\SubCategory::grouped(),
         'urls' => ['search' => route('admin.entries.search'), 'resolve' => route('admin.entries.resolve'), 'check' => route('admin.entries.check')],
         'linkStatuses' => $linkStatuses,
