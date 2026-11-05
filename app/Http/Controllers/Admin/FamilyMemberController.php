@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FamilyMember;
 use App\Models\LoreEntry;
+use App\Support\EntryExtras;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class FamilyMemberController extends Controller
 {
-    public function store(Request $request, LoreEntry $entry): RedirectResponse
+    public function store(Request $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
         abort_unless($entry->category === 'people', 404);
 
@@ -29,11 +32,11 @@ class FamilyMemberController extends Controller
             ->first();
 
         if ($relative?->is($entry)) {
-            return back()->withErrors(['name' => 'A person cannot be their own relative.'])->withInput();
+            throw ValidationException::withMessages(['name' => 'A person cannot be their own relative.']);
         }
 
         if ($relative && $entry->familyMembers()->where('relative_id', $relative->id)->exists()) {
-            return back()->withErrors(['name' => "{$relative->title} is already listed as a family member."])->withInput();
+            throw ValidationException::withMessages(['name' => "{$relative->title} is already listed as a family member."]);
         }
 
         DB::transaction(function () use ($entry, $relative, $name, $data): void {
@@ -50,10 +53,10 @@ class FamilyMemberController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Family member added.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Family member added.', ['extras' => EntryExtras::for($entry)]);
     }
 
-    public function update(Request $request, LoreEntry $entry, FamilyMember $member): RedirectResponse
+    public function update(Request $request, LoreEntry $entry, FamilyMember $member): JsonResponse|RedirectResponse
     {
         abort_unless($member->person_id === $entry->id, 404);
 
@@ -70,10 +73,10 @@ class FamilyMemberController extends Controller
                 ->update(['relationship' => FamilyMember::RELATIONSHIPS[$data['relationship']]['inverse']]);
         });
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Family relationship updated.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Family relationship updated.', ['extras' => EntryExtras::for($entry)]);
     }
 
-    public function destroy(LoreEntry $entry, FamilyMember $member): RedirectResponse
+    public function destroy(Request $request, LoreEntry $entry, FamilyMember $member): JsonResponse|RedirectResponse
     {
         abort_unless($member->person_id === $entry->id, 404);
 
@@ -85,6 +88,6 @@ class FamilyMemberController extends Controller
             $member->delete();
         });
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Family member removed.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Family member removed.', ['extras' => EntryExtras::for($entry)]);
     }
 }

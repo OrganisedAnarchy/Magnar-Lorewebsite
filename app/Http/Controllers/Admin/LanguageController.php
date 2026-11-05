@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LanguageRequest;
 use App\Models\Language;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -23,11 +25,12 @@ class LanguageController extends Controller
         return view('admin.languages.form', ['language' => new Language]);
     }
 
-    public function store(LanguageRequest $request): RedirectResponse
+    public function store(LanguageRequest $request): JsonResponse|RedirectResponse
     {
-        $this->persist(new Language, $request->validated());
+        $language = new Language;
+        $this->persist($language, $request->validated());
 
-        return redirect()->route('admin.languages.index')->with('status', 'Language created.');
+        return $this->respond($request, redirect()->route('admin.languages.index'), 'Language created.', $this->savedPayload($language));
     }
 
     public function edit(Language $language): View
@@ -35,18 +38,31 @@ class LanguageController extends Controller
         return view('admin.languages.form', ['language' => $language->load('words')]);
     }
 
-    public function update(LanguageRequest $request, Language $language): RedirectResponse
+    public function update(LanguageRequest $request, Language $language): JsonResponse|RedirectResponse
     {
         $this->persist($language, $request->validated());
 
-        return redirect()->route('admin.languages.index')->with('status', 'Language updated.');
+        return $this->respond($request, redirect()->route('admin.languages.index'), 'Language updated.', $this->savedPayload($language));
     }
 
-    public function destroy(Language $language): RedirectResponse
+    public function destroy(Request $request, Language $language): JsonResponse|RedirectResponse
     {
         $language->delete();
 
-        return redirect()->route('admin.languages.index')->with('status', 'Language deleted.');
+        return $this->respond($request, redirect()->route('admin.languages.index'), 'Language deleted.');
+    }
+
+    /**
+     * @return array{id: int, action: string, method: string, edit_url: string}
+     */
+    private function savedPayload(Language $language): array
+    {
+        return [
+            'id' => $language->id,
+            'action' => route('admin.languages.update', $language),
+            'method' => 'PUT',
+            'edit_url' => route('admin.languages.edit', $language),
+        ];
     }
 
     /**

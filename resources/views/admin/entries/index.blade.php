@@ -23,7 +23,7 @@
                     <td>{{ $entry->categoryLabel() }}@if ($entry->sub_category) — {{ $entry->sub_category }}@endif</td>
                     <td>
                         <a href="{{ route('admin.entries.edit', $entry) }}">Edit</a>
-                        <form class="inline" method="POST" action="{{ route('admin.entries.destroy', $entry) }}" onsubmit="return confirm('Delete this entry?')">
+                        <form class="inline" method="POST" action="{{ route('admin.entries.destroy', $entry) }}" data-ajax data-remove="tr" data-confirm="Delete this entry?">
                             @csrf
                             @method('DELETE')
                             <button class="btn btn-danger" type="submit">Delete</button>

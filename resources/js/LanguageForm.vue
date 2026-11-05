@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
+import { useAjaxSubmit } from './useAjaxSubmit.js';
 import { useFormDraft } from './useFormDraft.js';
 // Phonetics (IPA picker, sound playback, speech) is disabled for now: phonetics coming soon.
 // import IpaPicker from './ipa/IpaPicker.vue';
@@ -40,7 +41,7 @@ const words = ref((props.initial.words ?? []).map((row) => ({
     notes: row.notes ?? '',
 })));
 
-const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
     key: props.draftKey,
     snapshot: () => ({ ...form, syllables: syllables.value, words: words.value }),
     apply: ({ syllables: savedSyllables, words: draftWords, ...values }) => {
@@ -56,8 +57,15 @@ const generated = ref([]);
 const generatedText = ref([]);
 const showMissing = ref(false);
 
-const error = (name) => props.errors[name]?.[0];
-const nestedErrors = (prefix) => Object.entries(props.errors)
+const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
+    action: props.action,
+    method: props.method,
+    errors: props.errors,
+    onSaved: (data) => markSaved(data.id),
+});
+
+const error = (name) => formErrors.value[name]?.[0];
+const nestedErrors = (prefix) => Object.entries(formErrors.value)
     .filter(([key]) => key.startsWith(`${prefix}.`))
     .map(([, messages]) => messages[0]);
 
@@ -251,9 +259,9 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 </script>
 
 <template>
-    <form method="POST" class="language-form" :action="action" @submit="clearOnSubmit">
+    <form method="POST" class="language-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
-        <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+        <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
         <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
@@ -415,7 +423,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
         </section>
 
         <div class="form-actions">
-            <button class="btn" type="submit">Save</button>
+            <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <a :href="cancelUrl">Cancel</a>
             <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>

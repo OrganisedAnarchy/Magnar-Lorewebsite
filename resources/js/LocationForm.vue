@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
+import { useAjaxSubmit } from './useAjaxSubmit.js';
 import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
@@ -27,19 +28,40 @@ const form = reactive({
 });
 
 // The chosen map file can't be kept in a draft, so only the text fields, parent and pin are restored.
-const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
     key: props.draftKey,
     snapshot: () => ({ ...form }),
     apply: (values) => Object.assign(form, values),
     hasErrors: Object.keys(props.errors).length > 0,
 });
 
-const error = (name) => props.errors[name]?.[0];
+const currentMap = ref(props.currentMapUrl);
+const mapInput = ref(null);
+
+const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
+    action: props.action,
+    method: props.method,
+    errors: props.errors,
+    onSaved: (data) => {
+        currentMap.value = data.map_url ?? null;
+        form.remove_map = false;
+        markSaved(data.id);
+        if (newMapPreview.value) {
+            URL.revokeObjectURL(newMapPreview.value);
+            newMapPreview.value = null;
+        }
+        if (mapInput.value) {
+            mapInput.value.value = '';
+        }
+    },
+});
+
+const error = (name) => formErrors.value[name]?.[0];
 const newMapPreview = ref(null);
 
 const parentMapUrl = computed(() => props.parentOptions.find((option) => String(option.id) === form.parent_id)?.map_url ?? null);
 const hasPin = computed(() => form.pin_x !== '' && form.pin_y !== '');
-const mapShown = computed(() => newMapPreview.value ?? (form.remove_map ? null : props.currentMapUrl));
+const mapShown = computed(() => newMapPreview.value ?? (form.remove_map ? null : currentMap.value));
 
 const onMapChosen = (event) => {
     const file = event.target.files[0];
@@ -63,9 +85,9 @@ const onParentChange = () => {
 </script>
 
 <template>
-    <form method="POST" enctype="multipart/form-data" :action="action" @submit="clearOnSubmit">
+    <form method="POST" enctype="multipart/form-data" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
-        <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+        <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
         <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
@@ -98,17 +120,17 @@ const onParentChange = () => {
         </template>
 
         <label for="map">Map image</label>
-        <input id="map" name="map" type="file" accept="image/png,image/jpeg,image/webp" @change="onMapChosen">
+        <input id="map" ref="mapInput" name="map" type="file" accept="image/png,image/jpeg,image/webp" @change="onMapChosen">
         <p class="hint">Optional. Adding a map lets this location contain child locations; without one it is a single pin that shows its lore.</p>
         <div v-if="error('map')" class="error">{{ error('map') }}</div>
-        <label v-if="currentMapUrl" class="checkbox">
+                <label v-if="currentMap" class="checkbox">
             <input type="checkbox" name="remove_map" value="1" v-model="form.remove_map" :disabled="hasChildren">
             Remove the current map<span v-if="hasChildren" class="hint"> (not possible while it has child locations)</span>
         </label>
         <img v-if="mapShown" class="map-preview" :src="mapShown" alt="Map preview">
 
         <div class="form-actions">
-            <button class="btn" type="submit">Save location</button>
+            <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save location' }}</button>
             <a :href="cancelUrl">Cancel</a>
             <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>

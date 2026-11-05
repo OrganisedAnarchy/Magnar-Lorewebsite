@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LoreEntryRequest;
 use App\Models\LoreEntry;
 use App\Models\SubCategory;
+use App\Support\EntryExtras;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -142,13 +143,13 @@ class LoreEntryController extends Controller
         ]);
     }
 
-    public function store(LoreEntryRequest $request): RedirectResponse
+    public function store(LoreEntryRequest $request): JsonResponse|RedirectResponse
     {
         $data = $request->validated();
-        LoreEntry::create($data);
+        $entry = LoreEntry::create($data);
         SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
-        return redirect()->route('admin.entries.index')->with('status', 'Entry created.');
+        return $this->respond($request, redirect()->route('admin.entries.index'), 'Entry created.', $this->savedPayload($entry));
     }
 
     public function edit(LoreEntry $entry): View
@@ -159,19 +160,35 @@ class LoreEntryController extends Controller
         ]);
     }
 
-    public function update(LoreEntryRequest $request, LoreEntry $entry): RedirectResponse
+    public function update(LoreEntryRequest $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
         $data = $request->validated();
         $entry->update($data);
         SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
-        return redirect()->route('admin.entries.index')->with('status', 'Entry updated.');
+        return $this->respond($request, redirect()->route('admin.entries.index'), 'Entry updated.', $this->savedPayload($entry));
     }
 
-    public function destroy(LoreEntry $entry): RedirectResponse
+    public function destroy(Request $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
         $entry->delete();
 
-        return redirect()->route('admin.entries.index')->with('status', 'Entry deleted.');
+        return $this->respond($request, redirect()->route('admin.entries.index'), 'Entry deleted.');
+    }
+
+    /**
+     * What the Vue form needs to carry on editing the saved entry without a page load.
+     *
+     * @return array{id: int, action: string, method: string, edit_url: string}
+     */
+    private function savedPayload(LoreEntry $entry): array
+    {
+        return [
+            'id' => $entry->id,
+            'action' => route('admin.entries.update', $entry),
+            'method' => 'PUT',
+            'edit_url' => route('admin.entries.edit', $entry),
+            'extras' => EntryExtras::for($entry),
+        ];
     }
 }

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BookRequest;
 use App\Models\Book;
 use App\Models\Language;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -27,11 +29,12 @@ class BookController extends Controller
         ]);
     }
 
-    public function store(BookRequest $request): RedirectResponse
+    public function store(BookRequest $request): JsonResponse|RedirectResponse
     {
-        $this->persist(new Book, $request->validated());
+        $book = new Book;
+        $this->persist($book, $request->validated());
 
-        return redirect()->route('admin.books.index')->with('status', 'Book created.');
+        return $this->respond($request, redirect()->route('admin.books.index'), 'Book created.', $this->savedPayload($book));
     }
 
     public function edit(Book $book): View
@@ -42,18 +45,31 @@ class BookController extends Controller
         ]);
     }
 
-    public function update(BookRequest $request, Book $book): RedirectResponse
+    public function update(BookRequest $request, Book $book): JsonResponse|RedirectResponse
     {
         $this->persist($book, $request->validated());
 
-        return redirect()->route('admin.books.index')->with('status', 'Book updated.');
+        return $this->respond($request, redirect()->route('admin.books.index'), 'Book updated.', $this->savedPayload($book));
     }
 
-    public function destroy(Book $book): RedirectResponse
+    public function destroy(Request $request, Book $book): JsonResponse|RedirectResponse
     {
         $book->delete();
 
-        return redirect()->route('admin.books.index')->with('status', 'Book deleted.');
+        return $this->respond($request, redirect()->route('admin.books.index'), 'Book deleted.');
+    }
+
+    /**
+     * @return array{id: int, action: string, method: string, edit_url: string}
+     */
+    private function savedPayload(Book $book): array
+    {
+        return [
+            'id' => $book->id,
+            'action' => route('admin.books.update', $book),
+            'method' => 'PUT',
+            'edit_url' => route('admin.books.edit', $book),
+        ];
     }
 
     /**

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LocationRequest;
 use App\Models\Location;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -26,11 +28,12 @@ class LocationController extends Controller
         ]);
     }
 
-    public function store(LocationRequest $request): RedirectResponse
+    public function store(LocationRequest $request): JsonResponse|RedirectResponse
     {
-        $this->persist(new Location, $request);
+        $location = new Location;
+        $this->persist($location, $request);
 
-        return redirect()->route('admin.locations.index')->with('status', 'Location created.');
+        return $this->respond($request, redirect()->route('admin.locations.index'), 'Location created.', $this->savedPayload($location));
     }
 
     public function edit(Location $location): View
@@ -41,23 +44,41 @@ class LocationController extends Controller
         ]);
     }
 
-    public function update(LocationRequest $request, Location $location): RedirectResponse
+    public function update(LocationRequest $request, Location $location): JsonResponse|RedirectResponse
     {
         $this->persist($location, $request);
 
-        return redirect()->route('admin.locations.index')->with('status', 'Location updated.');
+        return $this->respond($request, redirect()->route('admin.locations.index'), 'Location updated.', $this->savedPayload($location));
     }
 
-    public function destroy(Location $location): RedirectResponse
+    public function destroy(Request $request, Location $location): JsonResponse|RedirectResponse
     {
         if ($location->children()->exists()) {
-            return back()->withErrors(['delete' => 'Move or delete this location\'s children first.']);
+            $message = 'Move or delete this location\'s children first.';
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->withErrors(['delete' => $message]);
         }
 
         $this->deleteMap($location);
         $location->delete();
 
-        return redirect()->route('admin.locations.index')->with('status', 'Location deleted.');
+        return $this->respond($request, redirect()->route('admin.locations.index'), 'Location deleted.');
+    }
+
+    /**
+     * @return array{id: int, action: string, method: string, edit_url: string, map_url: ?string}
+     */
+    private function savedPayload(Location $location): array
+    {
+        return [
+            'id' => $location->id,
+            'action' => route('admin.locations.update', $location),
+            'method' => 'PUT',
+            'edit_url' => route('admin.locations.edit', $location),
+            'map_url' => $location->mapUrl(),
+        ];
     }
 
     /**

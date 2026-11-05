@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LoreEntry;
 use App\Models\OrganisationMember;
+use App\Support\EntryExtras;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class OrganisationMemberController extends Controller
 {
-    public function store(Request $request, LoreEntry $entry): RedirectResponse
+    public function store(Request $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
         abort_unless($entry->category === 'organisations', 404);
 
@@ -25,25 +27,25 @@ class OrganisationMemberController extends Controller
 
         $entry->members()->create($data);
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Member added.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Member added.', ['extras' => EntryExtras::for($entry)]);
     }
 
-    public function update(Request $request, LoreEntry $entry, OrganisationMember $member): RedirectResponse
+    public function update(Request $request, LoreEntry $entry, OrganisationMember $member): JsonResponse|RedirectResponse
     {
         abort_unless($member->organisation_id === $entry->id, 404);
 
         $member->update($this->validated($request, $entry));
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Member updated.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Member updated.', ['extras' => EntryExtras::for($entry)]);
     }
 
-    public function destroy(LoreEntry $entry, OrganisationMember $member): RedirectResponse
+    public function destroy(Request $request, LoreEntry $entry, OrganisationMember $member): JsonResponse|RedirectResponse
     {
         abort_unless($member->organisation_id === $entry->id, 404);
 
         $member->delete();
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Member removed.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Member removed.', ['extras' => EntryExtras::for($entry)]);
     }
 
     /**

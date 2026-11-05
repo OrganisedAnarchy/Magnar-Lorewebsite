@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
+import { useAjaxSubmit } from './useAjaxSubmit.js';
 import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
@@ -28,7 +29,14 @@ const form = reactive({
     ...Object.fromEntries(Object.keys(dateParts).map((part) => [`published_${part}`, props.initial[`published_${part}`] ?? ''])),
 });
 
-const error = (name) => props.errors[name]?.[0];
+const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
+    action: props.action,
+    method: props.method,
+    errors: props.errors,
+    onSaved: (data) => markSaved(data.id),
+});
+
+const error = (name) => formErrors.value[name]?.[0];
 
 const authorMatches = ref([]);
 const authorOpen = ref(false);
@@ -72,7 +80,7 @@ const languages = ref([...(props.initial.languages ?? [])]);
 const languageInput = ref('');
 const languageOpen = ref(false);
 
-const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
     key: props.draftKey,
     snapshot: () => ({ ...form, languages: languages.value }),
     apply: ({ languages: savedLanguages, ...values }) => {
@@ -125,9 +133,9 @@ const closeLanguageList = () => {
 </script>
 
 <template>
-    <form method="POST" class="book-form" :action="action" @submit="clearOnSubmit">
+    <form method="POST" class="book-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
-        <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+        <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
         <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
@@ -184,7 +192,7 @@ const closeLanguageList = () => {
             </div>
             <p class="hint">“Common” means the book is in English. Remove it if the book isn’t available in Common.</p>
             <input v-for="name in languages" :key="name" type="hidden" name="languages[]" :value="name">
-            <div v-for="(messages, key) in errors" :key="key">
+            <div v-for="(messages, key) in formErrors" :key="key">
                 <div v-if="key.startsWith('languages')" class="error">{{ messages[0] }}</div>
             </div>
         </section>
@@ -227,7 +235,7 @@ const closeLanguageList = () => {
         </section>
 
         <div class="form-actions">
-            <button class="btn" type="submit">Save</button>
+            <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <a :href="cancelUrl">Cancel</a>
             <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>

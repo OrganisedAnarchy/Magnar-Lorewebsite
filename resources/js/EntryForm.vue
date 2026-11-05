@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { createMarkdownEditor } from './admin-editor.js';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
+import { useAjaxSubmit } from './useAjaxSubmit.js';
 import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
@@ -40,7 +41,7 @@ const form = reactive(pick(props.initial));
 const editorHost = ref(null);
 let editor = null;
 
-const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
     key: props.draftKey,
     snapshot: () => pick(form),
     apply: (values) => Object.assign(form, pick(values)),
@@ -73,13 +74,24 @@ onBeforeUnmount(() => {
     editor?.destroy();
 });
 
-const error = (name) => props.errors[name]?.[0];
+const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
+    action: props.action,
+    method: props.method,
+    errors: props.errors,
+    onSaved: (data) => {
+        markSaved(data.id);
+        // Family and organisation sections depend on the saved category.
+        window.dispatchEvent(new CustomEvent('entry-saved', { detail: { extras: data.extras } }));
+    },
+});
+
+const error = (name) => formErrors.value[name]?.[0];
 </script>
 
 <template>
-    <form method="POST" class="entry-form" :action="action" @submit="clearOnSubmit">
+    <form method="POST" class="entry-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
-        <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+        <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
         <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
@@ -149,7 +161,7 @@ const error = (name) => props.errors[name]?.[0];
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
 
             <div class="form-actions">
-                <button class="btn" type="submit">Save</button>
+                <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
                 <DraftStatus :state="draftState" :saved-at="savedAt" />
             </div>
         </div>

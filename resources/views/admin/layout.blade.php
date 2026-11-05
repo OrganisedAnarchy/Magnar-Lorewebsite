@@ -124,10 +124,8 @@
             <button type="submit">Log out</button>
         </form>
     </header>
+    <div id="toast-host" data-flash="{{ json_encode(session('status')) }}"></div>
     <main>
-        @if (session('status'))
-            <p class="status">{{ session('status') }}</p>
-        @endif
         @yield('content')
     </main>
 </body>

@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LoreEntry;
 use App\Models\OrganisationRank;
+use App\Support\EntryExtras;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class OrganisationRankController extends Controller
 {
-    public function store(Request $request, LoreEntry $entry): RedirectResponse
+    public function store(Request $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
         abort_unless($entry->category === 'organisations', 404);
 
@@ -25,15 +27,15 @@ class OrganisationRankController extends Controller
 
         $entry->ranks()->create($data);
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Rank added.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Rank added.', ['extras' => EntryExtras::for($entry)]);
     }
 
-    public function destroy(LoreEntry $entry, OrganisationRank $rank): RedirectResponse
+    public function destroy(Request $request, LoreEntry $entry, OrganisationRank $rank): JsonResponse|RedirectResponse
     {
         abort_unless($rank->organisation_id === $entry->id, 404);
 
         $rank->delete();
 
-        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Rank removed.');
+        return $this->respond($request, redirect()->route('admin.entries.edit', $entry), 'Rank removed.', ['extras' => EntryExtras::for($entry)]);
     }
 }

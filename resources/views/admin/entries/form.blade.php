@@ -28,10 +28,5 @@
         'linkStatuses' => $linkStatuses,
         'uncategorized' => $entry->exists && ! $entry->category,
     ]) }}"></div>
-    @if ($entry->exists && $entry->category === 'organisations')
-        @include('admin.entries._organisation')
-    @endif
-    @if ($entry->exists && $entry->category === 'people')
-        @include('admin.entries._family')
-    @endif
+    <div id="entry-extras-app" data-props="{{ json_encode(['initial' => $entry->exists ? \App\Support\EntryExtras::for($entry) : ['category' => null, 'family' => null, 'organisation' => null]]) }}"></div>
 @endsection

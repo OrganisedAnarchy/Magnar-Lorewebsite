@@ -15,7 +15,7 @@
                     <td>{{ $language->words_count }}</td>
                     <td>
                         <a href="{{ route('admin.languages.edit', $language) }}">Edit</a>
-                        <form class="inline" method="POST" action="{{ route('admin.languages.destroy', $language) }}" onsubmit="return confirm('Delete this language?')">
+                        <form class="inline" method="POST" action="{{ route('admin.languages.destroy', $language) }}" data-ajax data-remove="tr" data-confirm="Delete this language?">
                             @csrf
                             @method('DELETE')
                             <button class="btn btn-danger" type="submit">Delete</button>

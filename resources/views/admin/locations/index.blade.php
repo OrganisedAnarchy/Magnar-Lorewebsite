@@ -20,7 +20,7 @@
                         <td>{{ $location->children_count }}</td>
                         <td>
                             <a href="{{ route('admin.locations.edit', $location) }}">Edit</a>
-                            <form class="inline" method="POST" action="{{ route('admin.locations.destroy', $location) }}" onsubmit="return confirm('Delete this location?')">
+                            <form class="inline" method="POST" action="{{ route('admin.locations.destroy', $location) }}" data-ajax data-remove="tr" data-confirm="Delete this location?">
                                 @csrf
                                 @method('DELETE')
                                 <button class="btn btn-danger" type="submit">Delete</button>

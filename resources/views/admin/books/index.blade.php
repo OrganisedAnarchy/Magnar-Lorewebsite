@@ -17,7 +17,7 @@
                         <td>{{ implode(', ', $book->languages ?? []) }}</td>
                         <td>
                             <a href="{{ route('admin.books.edit', $book) }}">Edit</a>
-                            <form class="inline" method="POST" action="{{ route('admin.books.destroy', $book) }}" onsubmit="return confirm('Delete this book?')">
+                            <form class="inline" method="POST" action="{{ route('admin.books.destroy', $book) }}" data-ajax data-remove="tr" data-confirm="Delete this book?">
                                 @csrf
                                 @method('DELETE')
                                 <button class="btn btn-danger" type="submit">Delete</button>

@@ -8,17 +8,19 @@ import { clearDraft, loadDraft, saveDraft } from './draft-storage.js';
  * The form is only posted to Laravel when the user presses Save, at which point the draft is cleared.
  */
 export function useFormDraft({ key, snapshot, apply, hasErrors = false, delay = 600 }) {
-    const baseline = JSON.stringify(snapshot());
+    let currentKey = key;
+    let baseline = JSON.stringify(snapshot());
+    let showingErrors = hasErrors;
     const draftState = ref('idle');
     const restoredAt = ref(null);
     const savedAt = ref(null);
     let timer = null;
 
     // After a failed validation the submitted values are the starting point, so they are always worth keeping.
-    const isUnchanged = () => !hasErrors && JSON.stringify(snapshot()) === baseline;
+    const isUnchanged = () => !showingErrors && JSON.stringify(snapshot()) === baseline;
 
-    if (!hasErrors) {
-        const draft = loadDraft(key);
+    if (!showingErrors) {
+        const draft = loadDraft(currentKey);
         if (draft?.values && JSON.stringify(draft.values) !== baseline) {
             apply(draft.values);
             restoredAt.value = draft.savedAt ?? null;
@@ -27,13 +29,13 @@ export function useFormDraft({ key, snapshot, apply, hasErrors = false, delay = 
 
     const persist = () => {
         if (isUnchanged()) {
-            clearDraft(key);
+            clearDraft(currentKey);
             draftState.value = 'idle';
             return;
         }
 
         const now = new Date().toISOString();
-        if (saveDraft(key, { savedAt: now, values: snapshot() })) {
+        if (saveDraft(currentKey, { savedAt: now, values: snapshot() })) {
             savedAt.value = now;
             draftState.value = 'saved';
         } else {
@@ -56,26 +58,38 @@ export function useFormDraft({ key, snapshot, apply, hasErrors = false, delay = 
 
     const discardDraft = () => {
         clearTimeout(timer);
-        clearDraft(key);
+        clearDraft(currentKey);
         apply(JSON.parse(baseline));
         restoredAt.value = null;
         savedAt.value = null;
         // Applying the baseline triggers the watcher; settle back to idle once it has run.
         setTimeout(() => {
             clearTimeout(timer);
-            clearDraft(key);
+            clearDraft(currentKey);
             draftState.value = 'idle';
         }, 0);
     };
 
-    const clearOnSubmit = () => {
+    /**
+     * The form was saved to Laravel: the saved values become the new baseline and the draft is dropped.
+     * A record created from a "new" form moves its drafts to the key of the saved record.
+     */
+    const markSaved = (id = null) => {
         clearTimeout(timer);
-        clearDraft(key);
+        clearDraft(currentKey);
+        if (id !== null) {
+            currentKey = currentKey.replace(/_new$/, `_${id}`);
+        }
+        baseline = JSON.stringify(snapshot());
+        showingErrors = false;
+        restoredAt.value = null;
+        savedAt.value = null;
+        draftState.value = 'idle';
     };
 
     onMounted(() => {
         window.addEventListener('beforeunload', flush);
-        if (hasErrors) {
+        if (showingErrors) {
             persist();
         }
     });
@@ -85,5 +99,5 @@ export function useFormDraft({ key, snapshot, apply, hasErrors = false, delay = 
         clearTimeout(timer);
     });
 
-    return { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit };
+    return { draftState, restoredAt, savedAt, discardDraft, markSaved };
 }
