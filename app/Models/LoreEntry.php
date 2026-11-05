@@ -37,7 +37,6 @@ class LoreEntry extends Model
      */
     public const CATEGORIES = [
         'magic' => ['label' => 'Magic & the Arcane', 'examples' => 'Spells, systems, phenomena'],
-        'places' => ['label' => 'Places & Geography', 'examples' => 'Celestial bodies, countries, regions, cities, realms'],
         'organisations' => ['label' => 'Organisations & Factions', 'examples' => 'Guilds, houses, governments'],
         'nature' => ['label' => 'Nature & Life', 'examples' => 'Species, flora, fauna'],
         'people' => ['label' => 'People & Beings', 'examples' => 'Characters, gods, spirits'],
@@ -134,6 +133,11 @@ class LoreEntry extends Model
     public function members(): HasMany
     {
         return $this->hasMany(OrganisationMember::class, 'organisation_id');
+    }
+
+    public function familyMembers(): HasMany
+    {
+        return $this->hasMany(FamilyMember::class, 'person_id');
     }
 
     public function events(): BelongsToMany

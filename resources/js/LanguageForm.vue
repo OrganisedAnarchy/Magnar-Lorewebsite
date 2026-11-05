@@ -36,8 +36,9 @@ const words = ref((props.initial.words ?? []).map((row) => ({
     notes: row.notes ?? '',
 })));
 
-const generator = reactive({ count: 40, maxSyllables: 3 });
+const generator = reactive({ mode: 'words', count: 40, maxSyllables: 3, paragraphs: 2 });
 const generated = ref([]);
+const generatedText = ref([]);
 const showMissing = ref(false);
 
 const error = (name) => props.errors[name]?.[0];
@@ -45,17 +46,16 @@ const nestedErrors = (prefix) => Object.entries(props.errors)
     .filter(([key]) => key.startsWith(`${prefix}.`))
     .map(([, messages]) => messages[0]);
 
-const canAddSyllable = computed(() => draftRomanized.value.trim() !== '');
+const canAddSyllable = computed(() => draftRomanized.value.split(',').some((part) => part.trim() !== ''));
 const romanizedSyllables = computed(() => [...new Set(syllables.value.map((item) => item.romanized.trim()).filter(Boolean))]);
 
+// Several syllables can be added at once, separated by commas (e.g. kha, qha, vhra).
 const addSyllable = () => {
-    if (!canAddSyllable.value) {
-        return;
-    }
-    const romanized = draftRomanized.value.trim();
-    if (!syllables.value.some((item) => item.romanized.trim() === romanized)) {
-        syllables.value.push({ ipa: '', romanized });
-    }
+    draftRomanized.value.split(',').map((part) => part.trim().slice(0, 20)).filter(Boolean).forEach((romanized) => {
+        if (!syllables.value.some((item) => item.romanized.trim() === romanized)) {
+            syllables.value.push({ ipa: '', romanized });
+        }
+    });
     draftRomanized.value = '';
 };
 
@@ -63,24 +63,137 @@ const removeSyllable = (index) => syllables.value.splice(index, 1);
 
 const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
 
-const generateText = () => {
-    if (!romanizedSyllables.value.length) {
-        generated.value = [];
+const clamp = (value, min, max) => Math.min(Math.max(Number(value) || min, min), max);
+
+const makeWord = (max) => {
+    const length = 1 + Math.floor(Math.random() * max);
+    return Array.from({ length }, () => randomItem(romanizedSyllables.value)).join('');
+};
+
+// Swadesh meaning (lowercase, with and without its gloss) -> word already in the lexicon.
+const lexiconWordFor = (meaning) => {
+    const full = meaning.toLowerCase();
+    const loose = stripGloss(full);
+    const row = words.value.find((entry) => {
+        const own = entry.meaning.trim().toLowerCase();
+        return entry.word.trim() !== '' && own !== '' && (own === full || stripGloss(own) === loose);
+    });
+    return row ? row.word.trim() : null;
+};
+
+const generateWords = () => {
+    const max = clamp(generator.maxSyllables, 1, 8);
+    generated.value = Array.from({ length: clamp(generator.count, 1, 500) }, () => makeWord(max));
+};
+
+const PRONOUNS = ['I', 'you (singular)', 'he', 'we', 'you (plural)', 'they'];
+const DETERMINERS = ['this', 'that'];
+const PREPOSITIONS = ['at', 'in', 'with'];
+const ADJECTIVES = [
+    'big', 'long', 'wide', 'thick', 'heavy', 'small', 'short', 'narrow', 'thin', 'red', 'green', 'yellow', 'white', 'black',
+    'warm', 'cold', 'full', 'new', 'old', 'good', 'bad', 'rotten', 'dirty', 'straight', 'round', 'sharp', 'dull', 'smooth', 'wet', 'dry',
+];
+const NOT_NOUNS = new Set([
+    ...PRONOUNS, ...DETERMINERS, ...PREPOSITIONS, ...ADJECTIVES,
+    'here', 'there', 'who', 'what', 'where', 'when', 'how', 'not', 'all', 'many', 'some', 'few', 'other', 'one', 'two', 'three',
+    'four', 'five', 'correct', 'near', 'far', 'right', 'left', 'and', 'if', 'because',
+]);
+
+// Each sentence follows one of these patterns, so the glosses read like real English
+// (not necessarily grammatical): "I wash because dirty", "we see the fire in the forest".
+const SENTENCE_PATTERNS = [
+    ['pronoun', 'verb'],
+    ['pronoun', 'verb', 'noun'],
+    ['pronoun', 'not', 'verb', 'noun'],
+    ['pronoun', 'verb', 'preposition', 'noun'],
+    ['pronoun', 'verb', 'because', 'adjective'],
+    ['pronoun', 'verb', 'because', 'pronoun', 'verb'],
+    ['pronoun', 'verb', 'and', 'pronoun', 'verb'],
+    ['pronoun', 'verb', 'noun', 'if', 'pronoun', 'verb'],
+    ['determiner', 'noun', 'adjective'],
+    ['determiner', 'noun', 'not', 'adjective'],
+    ['who', 'verb', 'noun'],
+    ['noun', 'adjective', 'because', 'noun'],
+];
+
+const wordClasses = computed(() => {
+    const has = (item) => props.swadesh.includes(item);
+    const list = props.swadesh;
+
+    return {
+        pronoun: PRONOUNS.filter(has),
+        determiner: DETERMINERS.filter(has),
+        preposition: PREPOSITIONS.filter(has),
+        adjective: ADJECTIVES.filter(has),
+        verb: list.filter((item) => item.startsWith('to ')),
+        noun: list.filter((item) => !item.startsWith('to ') && !NOT_NOUNS.has(item)),
+        not: list.filter((item) => item === 'not'),
+        because: list.filter((item) => item === 'because'),
+        and: list.filter((item) => item === 'and'),
+        if: list.filter((item) => item === 'if'),
+        who: list.filter((item) => item === 'who'),
+    };
+});
+
+// Random sentences built from Swadesh meanings. A meaning already in the lexicon
+// reuses that word; a new meaning gets one generated word, repeated wherever it recurs.
+const generatePassage = () => {
+    const max = clamp(generator.maxSyllables, 1, 8);
+    const classes = wordClasses.value;
+    const patterns = SENTENCE_PATTERNS.filter((pattern) => pattern.every((slot) => classes[slot]?.length));
+    const chosen = new Map();
+
+    const tokenFor = (meaning) => {
+        if (!chosen.has(meaning)) {
+            const existing = lexiconWordFor(meaning);
+            let word = existing ?? makeWord(max);
+            for (let attempt = 0; !existing && lexiconHas(word) && attempt < 8; attempt += 1) {
+                word = makeWord(max);
+            }
+            chosen.set(meaning, word);
+        }
+        return { word: chosen.get(meaning), meaning };
+    };
+
+    if (!patterns.length) {
+        generatedText.value = [];
         return;
     }
-    const count = Math.min(Math.max(Number(generator.count) || 1, 1), 500);
-    const max = Math.min(Math.max(Number(generator.maxSyllables) || 1, 1), 8);
-    generated.value = Array.from({ length: count }, () => {
-        const length = 1 + Math.floor(Math.random() * max);
-        return Array.from({ length }, () => randomItem(romanizedSyllables.value)).join('');
+
+    const makeSentence = () => randomItem(patterns).map((slot) => tokenFor(randomItem(classes[slot])));
+
+    // Each paragraph is 3 to 6 sentences, shown as running text with its English reading below.
+    generatedText.value = Array.from({ length: clamp(generator.paragraphs, 1, 8) }, () => {
+        const sentences = Array.from({ length: 3 + Math.floor(Math.random() * 4) }, makeSentence);
+        const gloss = sentences
+            .map((tokens) => {
+                const line = tokens.map((token) => stripGloss(token.meaning)).join(' ');
+                return `${line.charAt(0).toUpperCase()}${line.slice(1)}.`;
+            })
+            .join(' ');
+
+        return { sentences, gloss };
     });
+};
+
+const generateText = () => {
+    generated.value = [];
+    generatedText.value = [];
+    if (!romanizedSyllables.value.length) {
+        return;
+    }
+    if (generator.mode === 'text') {
+        generatePassage();
+    } else {
+        generateWords();
+    }
 };
 
 const lexiconHas = (word) => words.value.some((row) => row.word.trim() === word);
 
-const addGeneratedWord = (word) => {
+const addGeneratedWord = (word, meaning = '') => {
     if (!lexiconHas(word)) {
-        words.value.push({ word, meaning: '', notes: '' });
+        words.value.push({ word, meaning, notes: '' });
     }
 };
 
@@ -155,10 +268,10 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 
         <section class="panel">
             <h2>Syllables</h2>
-            <p class="hint">Enter each syllable as written, e.g. <em>Le</em> or <em>Mon</em>.</p>
+            <p class="hint">Enter each syllable as written, e.g. <em>Le</em> or <em>Mon</em>. Separate several with commas: <em>kha, qha, vhra</em>.</p>
 
             <div class="field-row">
-                <input id="draft-romanized" v-model="draftRomanized" maxlength="20" autocomplete="off" aria-label="New syllable" placeholder="e.g. Le" @keydown.enter.prevent="addSyllable">
+                <input id="draft-romanized" v-model="draftRomanized" autocomplete="off" aria-label="New syllables" placeholder="e.g. Le or kha, qha, vhra" @keydown.enter.prevent="addSyllable">
                 <button type="button" class="btn small" :disabled="!canAddSyllable" @click="addSyllable">Add syllable</button>
             </div>
 
@@ -181,10 +294,19 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 
         <section class="panel">
             <h2>Word generator</h2>
-            <p class="hint">Builds sample words from your syllables. Click a word to add it to the lexicon.</p>
+            <p class="hint">Builds sample words, or a short random text, from your syllables. Click a word to add it to the lexicon.</p>
             <div class="generator-controls">
-                <label class="inline-field">Words
+                <label class="inline-field">Show as
+                    <select v-model="generator.mode">
+                        <option value="words">A set of words</option>
+                        <option value="text">A piece of text</option>
+                    </select>
+                </label>
+                <label v-if="generator.mode === 'words'" class="inline-field">Words
                     <input v-model.number="generator.count" type="number" min="1" max="500">
+                </label>
+                <label v-else class="inline-field">Paragraphs
+                    <input v-model.number="generator.paragraphs" type="number" min="1" max="8">
                 </label>
                 <label class="inline-field">Max syllables per word
                     <input v-model.number="generator.maxSyllables" type="number" min="1" max="8">
@@ -192,6 +314,26 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
                 <button type="button" class="btn small" :disabled="!romanizedSyllables.length" @click="generateText">Generate</button>
             </div>
             <p v-if="!romanizedSyllables.length" class="hint">Add some syllables first.</p>
+            <p v-if="generator.mode === 'text' && generatedText.length" class="hint">Each paragraph is built from Swadesh meanings, with a rough English reading underneath. Hover a word to see its meaning. Words already in your lexicon are reused.</p>
+            <div v-if="generatedText.length" class="generated-text">
+                <div v-for="(paragraph, paragraphIndex) in generatedText" :key="paragraphIndex" class="generated-paragraph">
+                    <p>
+                        <template v-for="(sentence, sentenceIndex) in paragraph.sentences" :key="sentenceIndex">
+                            <template v-for="(token, tokenIndex) in sentence" :key="tokenIndex">
+                        <button
+                            type="button"
+                            class="text-word"
+                            :class="{ added: lexiconHas(token.word) }"
+                            :disabled="lexiconHas(token.word)"
+                            :title="(token.meaning ? token.meaning + ' — ' : '') + (lexiconHas(token.word) ? 'already in lexicon' : 'click to add to lexicon')"
+                            @click="addGeneratedWord(token.word, token.meaning)"
+                        >{{ token.word }}</button>{{ tokenIndex < sentence.length - 1 ? ' ' : '. ' }}
+                            </template>
+                        </template>
+                    </p>
+                    <small class="text-gloss">{{ paragraph.gloss }}</small>
+                </div>
+            </div>
             <div v-if="generated.length" class="word-chips">
                 <button
                     v-for="(word, index) in generated"
@@ -222,7 +364,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             </div>
 
             <datalist id="swadesh-options">
-                <option v-for="item in swadesh" :key="item" :value="item" />
+                <option v-for="item in missingSwadesh" :key="item" :value="item" />
             </datalist>
 
             <div class="lexicon-rows">

@@ -19,8 +19,8 @@ class EventTest extends TestCase
             'name' => 'Lomile',
             'category' => 'populated_area',
         ]);
-        $location = LoreEntry::create([
-            'category' => 'places',
+        $loreEntry = LoreEntry::create([
+            'category' => 'magic',
             'title' => 'Lomile lore',
             'description' => 'A busy city.',
         ]);
@@ -39,7 +39,7 @@ class EventTest extends TestCase
             'day' => 8,
             'place_id' => $place->id,
         ]);
-        $event->loreEntries()->attach([$location->id, $organisation->id]);
+        $event->loreEntries()->attach([$loreEntry->id, $organisation->id]);
         $event->tags()->attach($warTag);
         $event->refresh();
 
@@ -50,7 +50,7 @@ class EventTest extends TestCase
         $this->assertSame(8, $event->day);
         $this->assertSame($place->id, $event->place->id);
         $this->assertSame(
-            [$location->id, $organisation->id],
+            [$loreEntry->id, $organisation->id],
             $event->loreEntries->modelKeys(),
         );
         $this->assertSame($warTag->id, $event->tags->sole()->id);

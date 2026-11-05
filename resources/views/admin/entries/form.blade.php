@@ -30,4 +30,7 @@
     @if ($entry->exists && $entry->category === 'organisations')
         @include('admin.entries._organisation')
     @endif
+    @if ($entry->exists && $entry->category === 'people')
+        @include('admin.entries._family')
+    @endif
 @endsection

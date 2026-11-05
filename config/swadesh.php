@@ -2,6 +2,7 @@
 
 /**
  * The Swadesh 207-item list used to measure how complete a language's lexicon is.
+ * This list has been extended beyond the original 207 items to include additional common words.
  */
 return [
     'list' => [
@@ -25,6 +26,7 @@ return [
         'mountain', 'red', 'green', 'yellow', 'white', 'black', 'night', 'day', 'year', 'warm',
         'cold', 'full', 'new', 'old', 'good', 'bad', 'rotten', 'dirty', 'straight', 'round',
         'sharp', 'dull', 'smooth', 'wet', 'dry', 'correct', 'near', 'far', 'right', 'left',
-        'at', 'in', 'with', 'and', 'if', 'because', 'name',
+        'at', 'in', 'with', 'and', 'if', 'because', 'name', 'dead', 'to make', 'to do', 'to read', 'to write', 'everyone',
+        'someone', 'no one', 'everything', 'something', 'nothing',
     ],
 ];

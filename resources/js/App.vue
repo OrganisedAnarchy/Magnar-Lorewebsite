@@ -113,6 +113,7 @@ function hideBody() {
             <nav class="header-actions" aria-label="Account">
                 <template v-if="authenticated">
                     <span class="member-name">Welcome, {{ userName }}</span>
+                    <a class="button button-quiet" href="/map">World map</a>
                     <a v-if="admin" class="button button-quiet" href="/admin">Admin</a>
                     <form action="/logout" method="post">
                         <input type="hidden" name="_token" :value="csrfToken">
@@ -120,6 +121,7 @@ function hideBody() {
                     </form>
                 </template>
                 <template v-else>
+                    <a class="button button-quiet" href="/map">World map</a>
                     <a class="button button-quiet" href="/login">Sign in</a>
                     <a class="button button-small" href="/register">Create an account</a>
                 </template>

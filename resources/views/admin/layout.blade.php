@@ -56,6 +56,13 @@
         .field-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
         .field-row input { flex: 1; min-width: 12rem; width: auto; }
         .syllable-draft { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .75rem; }
+        .generated-text { margin-top: .75rem; line-height: 2; }
+        .generated-paragraph { margin-bottom: 1.25rem; }
+        .generated-paragraph p { margin: 0 0 .25rem; }
+        .text-gloss { display: block; opacity: .6; line-height: 1.3; }
+        .text-word { background: none; border: 0; border-bottom: 1px dotted currentColor; color: inherit; font: inherit; padding: 0 .1rem; cursor: pointer; }
+        .text-word:hover:not(:disabled) { background: rgba(255, 255, 255, .15); }
+        .text-word.added { opacity: .55; cursor: default; border-bottom-style: solid; }
         .syllable-ipa { min-width: 4rem; font-size: 1.2rem; }
         .syllable-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .5rem; margin-top: .5rem; }
         .syllable-row { display: grid; grid-template-columns: 5rem 1fr auto; gap: .5rem; align-items: center; }
@@ -101,6 +108,7 @@
         <a href="{{ route('admin.entries.index') }}">Lore</a>
                 <a href="{{ route('admin.languages.index') }}">Languages</a>
                 <a href="{{ route('admin.books.index') }}">Books</a>
+                <a href="{{ route('admin.locations.index') }}">Locations</a>
                 <span class="spacer"></span>
         <a href="{{ route('home') }}">View site</a>
         <form class="inline" method="POST" action="{{ route('logout') }}">

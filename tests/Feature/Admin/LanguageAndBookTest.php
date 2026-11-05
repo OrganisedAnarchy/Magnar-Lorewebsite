@@ -129,7 +129,7 @@ class LanguageAndBookTest extends TestCase
     public function test_author_search_can_be_limited_to_people(): void
     {
         LoreEntry::factory()->create(['category' => 'people', 'title' => 'Mira Dawn']);
-        LoreEntry::factory()->create(['category' => 'places', 'title' => 'Mirador']);
+        LoreEntry::factory()->create(['category' => 'magic', 'title' => 'Mirador']);
 
         $this->actingAs($this->admin())->getJson(route('admin.entries.search', ['q' => 'mir', 'category' => 'people']))
             ->assertOk()

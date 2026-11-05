@@ -301,6 +301,18 @@ class AdminTest extends TestCase
             ->assertSessionHasErrors(['category', 'title']);
     }
 
+    public function test_places_category_is_no_longer_valid_for_lore_entries(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.store'), [
+                'category' => 'places',
+                'title' => 'Lomile',
+            ])
+            ->assertSessionHasErrors('category');
+
+        $this->assertDatabaseCount('lore_entries', 0);
+    }
+
     public function test_admin_can_update_and_delete_an_entry(): void
     {
         $entry = LoreEntry::factory()->create();
