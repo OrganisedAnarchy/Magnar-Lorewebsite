@@ -80,6 +80,36 @@ class FamilyMemberTest extends TestCase
         $this->get(route('admin.entries.edit', $aria))->assertOk();
     }
 
+    public function test_updating_a_relationship_updates_the_inverse_link(): void
+    {
+        $aria = $this->person('Aria');
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.family.store', $aria), ['name' => 'Borin', 'relationship' => 'child']);
+        $member = $aria->familyMembers()->first();
+
+        $this->put(route('admin.entries.family.update', [$aria, $member]), ['relationship' => 'adopted_child'])
+            ->assertRedirect(route('admin.entries.edit', $aria));
+
+        $borin = LoreEntry::where('title', 'Borin')->firstOrFail();
+        $this->assertDatabaseHas('family_members', ['person_id' => $aria->id, 'relative_id' => $borin->id, 'relationship' => 'adopted_child']);
+        $this->assertDatabaseHas('family_members', ['person_id' => $borin->id, 'relative_id' => $aria->id, 'relationship' => 'parent']);
+        $this->get(route('admin.entries.edit', $aria))->assertOk()->assertSee('Child (Adopted)');
+    }
+
+    public function test_cannot_update_to_an_invalid_relationship_or_another_persons_member(): void
+    {
+        $aria = $this->person('Aria');
+        $borin = $this->person('Borin');
+        $this->actingAs($this->admin())
+            ->post(route('admin.entries.family.store', $aria), ['name' => 'Cara', 'relationship' => 'sibling']);
+        $member = $aria->familyMembers()->first();
+
+        $this->put(route('admin.entries.family.update', [$aria, $member]), ['relationship' => 'cousin'])
+            ->assertSessionHasErrors('relationship');
+        $this->put(route('admin.entries.family.update', [$borin, $member]), ['relationship' => 'parent'])
+            ->assertNotFound();
+    }
+
     public function test_only_people_can_have_family(): void
     {
         $org = LoreEntry::create(['title' => 'Guild', 'category' => 'organisations']);

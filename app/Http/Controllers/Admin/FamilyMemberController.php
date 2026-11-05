@@ -53,6 +53,26 @@ class FamilyMemberController extends Controller
         return redirect()->route('admin.entries.edit', $entry)->with('status', 'Family member added.');
     }
 
+    public function update(Request $request, LoreEntry $entry, FamilyMember $member): RedirectResponse
+    {
+        abort_unless($member->person_id === $entry->id, 404);
+
+        $data = $request->validate([
+            'relationship' => ['required', Rule::in(array_keys(FamilyMember::RELATIONSHIPS))],
+        ]);
+
+        DB::transaction(function () use ($entry, $member, $data): void {
+            $member->update(['relationship' => $data['relationship']]);
+
+            FamilyMember::query()
+                ->where('person_id', $member->relative_id)
+                ->where('relative_id', $entry->id)
+                ->update(['relationship' => FamilyMember::RELATIONSHIPS[$data['relationship']]['inverse']]);
+        });
+
+        return redirect()->route('admin.entries.edit', $entry)->with('status', 'Family relationship updated.');
+    }
+
     public function destroy(LoreEntry $entry, FamilyMember $member): RedirectResponse
     {
         abort_unless($member->person_id === $entry->id, 404);

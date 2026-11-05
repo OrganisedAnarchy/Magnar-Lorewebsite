@@ -9,6 +9,16 @@
         @forelse ($family as $member)
             <li>
                 <strong>{{ $member->relationshipLabel() }}:</strong> {{ $member->relative->title }}
+                <form method="POST" action="{{ route('admin.entries.family.update', [$entry, $member]) }}" style="display:inline">
+                    @csrf
+                    @method('PUT')
+                    <select name="relationship" aria-label="Change relationship to {{ $member->relative->title }}">
+                        @foreach (\App\Models\FamilyMember::RELATIONSHIPS as $key => $info)
+                            <option value="{{ $key }}" @selected($member->relationship === $key)>{{ $info['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn" type="submit">Update</button>
+                </form>
                 <form method="POST" action="{{ route('admin.entries.family.destroy', [$entry, $member]) }}" style="display:inline">
                     @csrf
                     @method('DELETE')
@@ -21,6 +31,7 @@
     </ul>
 
     <h3>Add a family member</h3>
+    <p class="hint">Direct relations only e.g. Parents, Spouses, Children.</p>
     <form method="POST" action="{{ route('admin.entries.family.store', $entry) }}">
         @csrf
         <label for="family_name">Name</label>

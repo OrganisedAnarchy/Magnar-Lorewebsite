@@ -38,6 +38,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('entries/{entry}/ranks', [OrganisationRankController::class, 'store'])->name('entries.ranks.store');
     Route::delete('entries/{entry}/ranks/{rank}', [OrganisationRankController::class, 'destroy'])->name('entries.ranks.destroy');
     Route::post('entries/{entry}/family', [FamilyMemberController::class, 'store'])->name('entries.family.store');
+    Route::put('entries/{entry}/family/{member}', [FamilyMemberController::class, 'update'])->name('entries.family.update');
     Route::delete('entries/{entry}/family/{member}', [FamilyMemberController::class, 'destroy'])->name('entries.family.destroy');
     Route::post('entries/{entry}/members', [OrganisationMemberController::class, 'store'])->name('entries.members.store');
     Route::put('entries/{entry}/members/{member}', [OrganisationMemberController::class, 'update'])->name('entries.members.update');

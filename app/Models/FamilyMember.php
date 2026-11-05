@@ -17,6 +17,7 @@ class FamilyMember extends Model
     public const RELATIONSHIPS = [
         'parent' => ['label' => 'Parent', 'inverse' => 'child'],
         'child' => ['label' => 'Child', 'inverse' => 'parent'],
+        'adopted_child' => ['label' => 'Child (Adopted)', 'inverse' => 'parent'],
         'spouse' => ['label' => 'Spouse', 'inverse' => 'spouse'],
         'sibling' => ['label' => 'Sibling', 'inverse' => 'sibling'],
     ];
