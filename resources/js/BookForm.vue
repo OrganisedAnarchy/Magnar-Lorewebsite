@@ -1,10 +1,14 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import DraftBanner from './DraftBanner.vue';
+import DraftStatus from './DraftStatus.vue';
+import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
     action: { type: String, required: true },
     method: { type: String, default: 'POST' },
     csrf: { type: String, required: true },
+    draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     languageOptions: { type: Array, default: () => [] },
     errors: { type: Object, default: () => ({}) },
@@ -68,6 +72,16 @@ const languages = ref([...(props.initial.languages ?? [])]);
 const languageInput = ref('');
 const languageOpen = ref(false);
 
+const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+    key: props.draftKey,
+    snapshot: () => ({ ...form, languages: languages.value }),
+    apply: ({ languages: savedLanguages, ...values }) => {
+        Object.assign(form, values);
+        languages.value = [...(savedLanguages ?? [])];
+    },
+    hasErrors: Object.keys(props.errors).length > 0,
+});
+
 const hasLanguage = (name) => languages.value.some((existing) => existing.toLowerCase() === name.toLowerCase());
 
 const languageSuggestions = computed(() => {
@@ -111,9 +125,11 @@ const closeLanguageList = () => {
 </script>
 
 <template>
-    <form method="POST" class="book-form" :action="action">
+    <form method="POST" class="book-form" :action="action" @submit="clearOnSubmit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+
+        <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
         <section class="panel">
             <label for="title">Title</label>
@@ -213,6 +229,7 @@ const closeLanguageList = () => {
         <div class="form-actions">
             <button class="btn" type="submit">Save</button>
             <a :href="cancelUrl">Cancel</a>
+            <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>
     </form>
 </template>

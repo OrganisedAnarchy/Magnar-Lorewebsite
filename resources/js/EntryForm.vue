@@ -1,7 +1,9 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { createMarkdownEditor } from './admin-editor.js';
-import { clearDraft, loadDraft, saveDraft } from './draft-cookie.js';
+import DraftBanner from './DraftBanner.vue';
+import DraftStatus from './DraftStatus.vue';
+import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
     action: { type: String, required: true },
@@ -35,83 +37,25 @@ const pick = (source) => Object.fromEntries(fieldNames.map((name) => [
 ]));
 
 const form = reactive(pick(props.initial));
-const hasServerErrors = Object.keys(props.errors).length > 0;
-
-const draftState = ref('idle');
-const restoredAt = ref(null);
-const savedAt = ref(null);
 const editorHost = ref(null);
 let editor = null;
-let timer = null;
 
-const sameAsInitial = (values) => JSON.stringify(pick(values)) === JSON.stringify(pick(props.initial));
-
-if (!hasServerErrors) {
-    const draft = loadDraft(props.draftKey);
-    if (draft?.values && !sameAsInitial(draft.values)) {
-        Object.assign(form, pick(draft.values));
-        restoredAt.value = draft.savedAt ?? null;
-    }
-}
+const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+    key: props.draftKey,
+    snapshot: () => pick(form),
+    apply: (values) => Object.assign(form, pick(values)),
+    hasErrors: Object.keys(props.errors).length > 0,
+});
 
 const isPeople = computed(() => form.category === 'people');
 const subCategoryOptions = computed(() => props.subCategories[form.category] ?? []);
 const categoryList = computed(() => Object.entries(props.categories));
-const formatTime = (value) => (value ? new Date(value).toLocaleString() : '');
-
-const persist = () => {
-    if (sameAsInitial(form) && !hasServerErrors) {
-        clearDraft(props.draftKey);
-        draftState.value = 'idle';
-        return;
-    }
-
-    const now = new Date().toISOString();
-    if (saveDraft(props.draftKey, { savedAt: now, values: pick(form) })) {
-        savedAt.value = now;
-        draftState.value = 'saved';
-    } else {
-        draftState.value = 'too-large';
-    }
-};
-
-watch(form, () => {
-    draftState.value = 'pending';
-    clearTimeout(timer);
-    timer = setTimeout(persist, 600);
-});
 
 watch(() => form.description, (value) => {
     if (editor && editor.state.doc.toString() !== value) {
         editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value } });
     }
 });
-
-const discardDraft = () => {
-    clearTimeout(timer);
-    clearDraft(props.draftKey);
-    Object.assign(form, pick(props.initial));
-    restoredAt.value = null;
-    savedAt.value = null;
-    draftState.value = 'idle';
-};
-
-const clearOnSubmit = () => {
-    clearTimeout(timer);
-    clearDraft(props.draftKey);
-};
-
-// Validation failures re-render this page, so persist the submitted values again straight away.
-if (hasServerErrors) {
-    nextTick(persist);
-}
-
-const flush = () => {
-    if (draftState.value === 'pending') {
-        clearTimeout(timer);
-        persist();
-    }
-};
 
 onMounted(() => {
     editor = createMarkdownEditor(editorHost.value, {
@@ -123,11 +67,9 @@ onMounted(() => {
         categories: [...Object.values(props.categories).map((info) => info.label), ...props.linkTypes],
         linkStatuses: props.linkStatuses,
     });
-    window.addEventListener('beforeunload', flush);
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('beforeunload', flush);
     editor?.destroy();
 });
 
@@ -139,10 +81,7 @@ const error = (name) => props.errors[name]?.[0];
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
 
-        <div v-if="restoredAt" class="draft-banner" role="status">
-            Restored an unsaved draft from {{ formatTime(restoredAt) }}.
-            <button type="button" class="link-button" @click="discardDraft">Discard draft</button>
-        </div>
+        <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
         <div id="Highlevel-details" class="highlevel-details">
             <label for="category">Category</label>
@@ -211,11 +150,7 @@ const error = (name) => props.errors[name]?.[0];
 
             <div class="form-actions">
                 <button class="btn" type="submit">Save</button>
-                <span class="hint draft-status" aria-live="polite">
-                    <template v-if="draftState === 'pending'">Draft changes…</template>
-                    <template v-else-if="draftState === 'saved'">Draft autosaved {{ formatTime(savedAt) }}</template>
-                    <template v-else-if="draftState === 'too-large'">Draft too large to autosave in a cookie — save your work.</template>
-                </span>
+                <DraftStatus :state="draftState" :saved-at="savedAt" />
             </div>
         </div>
     </form>

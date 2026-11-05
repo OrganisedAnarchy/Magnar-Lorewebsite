@@ -9,6 +9,7 @@
         'action' => $location->exists ? route('admin.locations.update', $location) : route('admin.locations.store'),
         'method' => $location->exists ? 'PUT' : 'POST',
         'csrf' => csrf_token(),
+        'draftKey' => 'draft_location_'.($location->exists ? $location->getKey() : 'new'),
         'initial' => [
             'name' => old('name', $location->name),
             'description' => old('description', $location->description),

@@ -9,6 +9,7 @@
         'action' => $language->exists ? route('admin.languages.update', $language) : route('admin.languages.store'),
         'method' => $language->exists ? 'PUT' : 'POST',
         'csrf' => csrf_token(),
+        'draftKey' => 'draft_language_'.($language->exists ? $language->getKey() : 'new'),
         'initial' => [
             'name' => old('name', $language->name),
             'description' => old('description', $language->description),

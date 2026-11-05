@@ -1,5 +1,8 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import DraftBanner from './DraftBanner.vue';
+import DraftStatus from './DraftStatus.vue';
+import { useFormDraft } from './useFormDraft.js';
 // Phonetics (IPA picker, sound playback, speech) is disabled for now: phonetics coming soon.
 // import IpaPicker from './ipa/IpaPicker.vue';
 // import { playIpa, playSequence } from './ipa/audio.js';
@@ -10,6 +13,7 @@ const props = defineProps({
     action: { type: String, required: true },
     method: { type: String, default: 'POST' },
     csrf: { type: String, required: true },
+    draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     swadesh: { type: Array, default: () => [] },
     errors: { type: Object, default: () => ({}) },
@@ -35,6 +39,17 @@ const words = ref((props.initial.words ?? []).map((row) => ({
     meaning: row.meaning ?? '',
     notes: row.notes ?? '',
 })));
+
+const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+    key: props.draftKey,
+    snapshot: () => ({ ...form, syllables: syllables.value, words: words.value }),
+    apply: ({ syllables: savedSyllables, words: draftWords, ...values }) => {
+        Object.assign(form, values);
+        syllables.value = (savedSyllables ?? []).map((item) => ({ ipa: item.ipa ?? '', romanized: item.romanized ?? '' }));
+        words.value = (draftWords ?? []).map((row) => ({ word: row.word ?? '', meaning: row.meaning ?? '', notes: row.notes ?? '' }));
+    },
+    hasErrors: Object.keys(props.errors).length > 0,
+});
 
 const generator = reactive({ mode: 'words', count: 40, maxSyllables: 3, paragraphs: 2 });
 const generated = ref([]);
@@ -236,9 +251,11 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 </script>
 
 <template>
-    <form method="POST" class="language-form" :action="action">
+    <form method="POST" class="language-form" :action="action" @submit="clearOnSubmit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+
+        <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
         <section class="panel">
             <h2>Overview</h2>
@@ -400,6 +417,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
         <div class="form-actions">
             <button class="btn" type="submit">Save</button>
             <a :href="cancelUrl">Cancel</a>
+            <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>
     </form>
 </template>

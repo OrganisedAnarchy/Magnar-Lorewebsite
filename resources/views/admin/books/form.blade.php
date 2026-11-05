@@ -23,6 +23,7 @@
         'action' => $book->exists ? route('admin.books.update', $book) : route('admin.books.store'),
         'method' => $book->exists ? 'PUT' : 'POST',
         'csrf' => csrf_token(),
+        'draftKey' => 'draft_book_'.($book->exists ? $book->getKey() : 'new'),
         'initial' => $initial,
         'languageOptions' => $languageOptions,
         'errors' => $errors->getMessages(),

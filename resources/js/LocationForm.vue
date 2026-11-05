@@ -1,10 +1,14 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import DraftBanner from './DraftBanner.vue';
+import DraftStatus from './DraftStatus.vue';
+import { useFormDraft } from './useFormDraft.js';
 
 const props = defineProps({
     action: { type: String, required: true },
     method: { type: String, default: 'POST' },
     csrf: { type: String, required: true },
+    draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     currentMapUrl: { type: String, default: null },
     hasChildren: { type: Boolean, default: false },
@@ -20,6 +24,14 @@ const form = reactive({
     pin_x: props.initial.pin_x ?? '',
     pin_y: props.initial.pin_y ?? '',
     remove_map: Boolean(props.initial.remove_map),
+});
+
+// The chosen map file can't be kept in a draft, so only the text fields, parent and pin are restored.
+const { draftState, restoredAt, savedAt, discardDraft, clearOnSubmit } = useFormDraft({
+    key: props.draftKey,
+    snapshot: () => ({ ...form }),
+    apply: (values) => Object.assign(form, values),
+    hasErrors: Object.keys(props.errors).length > 0,
 });
 
 const error = (name) => props.errors[name]?.[0];
@@ -51,9 +63,11 @@ const onParentChange = () => {
 </script>
 
 <template>
-    <form method="POST" enctype="multipart/form-data" :action="action">
+    <form method="POST" enctype="multipart/form-data" :action="action" @submit="clearOnSubmit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="method !== 'POST'" type="hidden" name="_method" :value="method">
+
+        <DraftBanner :restored-at="restoredAt" @discard="discardDraft" />
 
         <label for="name">Name</label>
         <input id="name" name="name" v-model="form.name" maxlength="255" required>
@@ -96,6 +110,7 @@ const onParentChange = () => {
         <div class="form-actions">
             <button class="btn" type="submit">Save location</button>
             <a :href="cancelUrl">Cancel</a>
+            <DraftStatus :state="draftState" :saved-at="savedAt" />
         </div>
     </form>
 </template>
