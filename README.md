@@ -1,24 +1,74 @@
 # The World of Magnar
 
-A player-focused TTRPG reference for the world of Magnar, built with Laravel,
-Vue, SCSS, and Docker.
+![Version](https://img.shields.io/badge/version-0.2-blue)
+![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white)
 
-## Product direction
+A full-stack lore wiki and reference site for **Magnar**, a custom tabletop RPG
+setting. It combines a public-facing world guide (an animated celestial system
+and an interactive map) with an admin-only authoring suite for lore entries,
+constructed languages, books and locations.
 
-The World of Magnar is not a general-purpose worldbuilding wiki or a World
-Anvil clone. Its intended audience is a TTRPG player who signs in, creates a
-character, chooses details such as which gods they believe in, their birthplace,
-and race, and gets a concise at-a-glance reference to the parts of the setting that
-character would know. Keep future features focused on player characters and
-contextual, character-known information rather than open-ended lore authoring.
+**Current version: 0.2**
 
-The celestial system presents Magnar and its three moons, two suns, and five
-neighboring planets. Magnar's year is 780 days: two 390-day cycles, each
-containing thirteen 30-day months. Its eight seasonal stages place winter on
-both sides of the cycle boundary, making one 195-day winter. The system diagram
-keeps its celestial bodies in continuous motion with randomized starting
-positions. It does not simulate seasons or cycles, and Helia remains assigned
-to one randomly chosen inner planet for the duration of the page view.
+## Highlights
+
+- **Reactive Vue admin forms with draft autosave.** Every lore category, language,
+  book and location is edited in a Vue 3 component. Changes are autosaved as a
+  local draft as you type, restored on your next visit (with a one-click discard),
+  and only posted to Laravel when you press **Save**, where Laravel's form
+  requests validate and persist them.
+- **Wiki-style linking.** A CodeMirror 6 Markdown editor supports
+  `[[Title]]`, `[[Title|Alias]]` and `[[Title@Category]]` links with
+  autocomplete, live "exists / missing" link checking, and Ctrl/Cmd+click to open
+  or create the linked entry.
+- **Ten lore categories** (Magic, Organisations, Nature, People, Religion,
+  Technology, Items, History, Culture, Cosmology) with free-form sub-categories
+  that are remembered and suggested across entries.
+- **In-world calendar.** Birth, death and publication dates use Magnar's
+  day-month-cycle-year calendar, with "circa" and "unknown" flags.
+- **Relationships.** Family trees for people, plus ranks and memberships for
+  organisations.
+- **Constructed-language tooling.** A language builder with
+  syllable inventories, a lexicon, random word and passage generators, and
+  vocabulary coverage measured against an extended Swadesh list.
+- **Books.** Author lookup (auto-creating missing people), available languages,
+  summaries and full text.
+- **Interactive map.** Locations can carry an uploaded map image and contain child
+  locations pinned on their parent's map, browsed through a JSON-backed Vue viewer.
+- **Celestial system.** An animated diagram of Magnar's three moons, two suns and
+  five neighbouring planets. Magnar's 780-day year is two 390-day cycles of
+  thirteen 30-day months.
+- **Access control.** Session authentication with registration and sign-in, and
+  an admin middleware guarding the authoring area.
+
+## Technology
+
+| Layer | Technologies |
+| --- | --- |
+| Backend | PHP 8.4, Laravel 13, Eloquent ORM, Form Requests, database-backed sessions |
+| Frontend | Vue 3 (Composition API, `<script setup>`), SCSS, CodeMirror 6 |
+| Build tooling | Vite 8, `laravel-vite-plugin`, `@vitejs/plugin-vue`, Sass |
+| Database | MySQL 8.4 (SQLite supported for local testing) |
+| Infrastructure | Docker, Docker Compose, Apache, multi-stage image build (Node 24 + PHP 8.4) |
+| Testing & quality | PHPUnit 12, Laravel Pint |
+| Tooling | Laravel Boost, Laravel Pail, Laravel Tinker |
+
+## Architecture notes
+
+- Public pages are Blade views; interactive pieces (admin forms, the map and the
+  celestial diagram) are Vue components mounted from `resources/js/`.
+- Entry points: `resources/js/app.js` (public site), `resources/js/admin.js`
+  (admin forms) and `resources/js/map.js` (map viewer).
+- Admin forms share a `useFormDraft` composable
+  (`resources/js/useFormDraft.js`) that snapshots form state, debounces autosave
+  to `localStorage`, restores drafts, and clears them on submit. Drafts are keyed
+  per form and record, so editing several entries never mixes drafts.
+- Admin routes live under `/admin` behind the `auth` and `admin` middleware.
+  Controllers in `app/Http/Controllers/Admin` use dedicated Form Requests for
+  validation.
+- Feature and unit tests live in `tests/`.
 
 ## Run with Docker
 
@@ -47,19 +97,39 @@ already in use, set `APP_PORT` in `.env` to another host port. The Docker image
 serves Laravel while a separate Vite container watches source files and serves
 the Vue and SCSS assets with hot module replacement. Changes to backend PHP,
 routes, Blade templates, Vue components, and SCSS are reflected automatically.
-The Vue entry point is `resources/js/app.js`, the root component is
-`resources/js/App.vue`, and global styles are in `resources/scss/app.scss`.
 
-After the initial start, changes are watched automatically; no image rebuild is
-needed. To stop the development stack:
+To stop the development stack:
 
 ```sh
 docker compose -f compose.yaml -f compose.dev.yaml down
 ```
 
-## Accounts
+## Accounts and admin access
 
 The welcome page links to account creation at `/register` and sign-in at
 `/login`. Accounts use Laravel's session authentication and are stored in the
 configured database. Registration requires a name, unique email address, and
-confirmed password of at least eight characters.
+confirmed password of at least eight characters. The admin area at `/admin`
+requires an account with the `is_admin` flag set.
+
+## Testing and formatting
+
+```sh
+php artisan test --compact
+vendor/bin/pint --dirty
+```
+
+## Product direction
+
+The World of Magnar is aimed at TTRPG players: the long-term goal is a concise,
+at-a-glance reference where a player creates a character, chooses details such as
+beliefs, birthplace and race, and sees the parts of the setting that character
+would know. The admin lore tools exist to feed that experience.
+
+## Versioning
+
+This project follows a simple `MAJOR.MINOR` scheme.
+
+| Version | Summary |
+| --- | --- |
+| 0.2 | Vue-based forms for all lore categories, languages, books and locations with reactive draft autosave; locations and interactive map; family trees; organisation members and ranks; language tools. |
