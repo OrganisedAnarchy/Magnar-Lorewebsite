@@ -1,10 +1,58 @@
-//todo: Implement a frontend for navigating the lore.
-//todo: Implement the player character management system
-//todo: Add tags to all lore systems, and implement filtering by tags.
-//todo: Add hidden lore subjects and what tags they are locked behind
-//todo: Implement a system for giving tag permissions to players.
-//todo: Implement a system to mark lore subjects as needs-updating.
-//todo: When using a wiki link, it should mark the referenced lore subject as needing update.
-//todo: When a piece of lore gets flagged for update, it should say why it needs updating.
-//todo: Implement a system to notify players when lore they have access to is updated.
-//todo: Implement a storyteller system so that storytellers can create and update lore.
+- Frontend Implementation
+    - Implement a frontend for navigating the lore.
+        - Timeline View
+        - Search Functionality
+        - Sorting Options
+        - Favorites/Bookmarks
+        - Family Trees
+            - Immediate family members first
+            - Include extended family members using the connections in the family tree.
+            - Allow collapsing and expanding branches of the family tree.
+        - Character Profiles
+        - Lore Subject Pages
+        - Map View
+        - Interactive Timelines
+        - Notifications for Updates
+        - In world books
+            - Implement a system for creating and managing in world books.
+            - Allow players to access in world books they are granted access to.
+            - Bookcase view for displaying accessible in world books.
+- Admin Implementation
+    - In World Book Management
+        - Language Selection for in world books.
+        - Implement a system to manage in world books languages.
+            - Connected to in world languages.
+            - implement a system that allows hovering over certain words (highlighting them) to show what they were translated from.
+            e.g. hovering over fire would show the original word in the source language.
+            - Publish Date for each in world book translation.
+            - Which fantasy language a book is available in.
+- Backend Systems
+    - Implement the player character management system
+        - Backstory Management
+        - Tag selection
+    - Add tags to all lore systems, and implement filtering by tags.
+        - Tag system entry comma separated and searchable (WordPress style)
+        - Tag filtering for lore subjects
+        - Allow Players to generate a lore document based on which tags they have access to.
+        - Make some tags as a "Must be granted" before being given to players.
+    - Add hidden lore subjects and what tags they are locked behind
+        - Tier hidden lore subjects behind specific number of tags
+        - Specify which tags unlock hidden lore subjects
+        - Rank tags by importance or relevance
+        - Allow sorting hidden lore subjects by tag importance or relevance
+        - Implement tags as must-have for accessing certain hidden lore subjects.
+    - Implement a system to mark lore subjects as needs-updating.
+        - When using a wiki link, it should mark the referenced lore subject as needing update.
+        - When a piece of lore gets flagged for update, it should say why it needs updating.
+        - Implement a system to notify players when lore they have access to is updated.
+    - Implement a storyteller system so that storytellers can create and update lore.
+        - Implement a system to notify storytellers when lore subjects they updated or created got approved or rejected.
+        - Storytellers should be able to see awaiting approval lore subjects they have submitted.
+        - Implement a system for storytellers to edit their submitted lore subjects before approval.
+        - Implement a system for storytellers to withdraw their submitted lore subjects before approval.
+        - Implement a system for storytellers to see the status of their submitted lore subjects.
+        - Implement a system for storytellers to receive feedback on rejected lore subjects.
+        - Implement a system for storytellers to receive notifications when their submitted lore subjects are approved.
+    - Current Notifications System should be extended to handle:
+        - Email notifications for all implemented notification types.
+        - Mobile notifications for all implemented notification types.
