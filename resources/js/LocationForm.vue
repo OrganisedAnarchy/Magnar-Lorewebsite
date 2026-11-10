@@ -195,10 +195,3 @@ const onParentChange = () => {
         </div>
     </form>
 </template>
-
-<style scoped>
-.pin-picker { position: relative; display: inline-block; max-width: 100%; cursor: crosshair; border: 1px solid #3a3450; }
-.pin-picker img, .map-preview { display: block; max-width: 100%; }
-.map-preview { margin-top: .75rem; max-height: 20rem; }
-.pin { position: absolute; width: 1rem; height: 1rem; margin: -.5rem 0 0 -.5rem; background: #ff5a6e; border: 2px solid #fff; border-radius: 50%; pointer-events: none; }
-</style>

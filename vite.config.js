@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/scss/app.scss', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/map.js'],
+            input: ['resources/scss/app.scss', 'resources/scss/admin.scss', 'resources/scss/map.scss', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/map.js'],
             refresh: true,
         }),
         vue(),

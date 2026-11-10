@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>World map · {{ config('app.name', 'The World of Magnar') }}</title>
-    @vite(['resources/js/map.js'])
+    @vite(['resources/scss/map.scss', 'resources/js/map.js'])
 </head>
 <body>
     <div

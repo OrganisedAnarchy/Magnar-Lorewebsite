@@ -119,25 +119,3 @@ onMounted(async () => {
         </aside>
     </main>
 </template>
-
-<style>
-body { margin: 0; background: #14121a; color: #e8e4f0; font-family: system-ui, sans-serif; }
-.map-page { max-width: 70rem; margin: 0 auto; padding: 1rem; }
-.map-page header { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
-.map-page a, .map-page button { color: #cdb8ff; }
-.crumbs button, .root-list button { background: none; border: 0; font: inherit; cursor: pointer; text-decoration: underline; }
-.notice { color: #9a93ad; }
-.root-list { list-style: none; padding: 0; }
-.root-list li { padding: .5rem 0; }
-.tag { margin-left: .5rem; padding: 0 .5rem; background: #1f1b2b; border-radius: 999px; font-size: .75rem; }
-.map-frame { position: relative; display: inline-block; max-width: 100%; border: 1px solid #3a3450; }
-.map-frame img { display: block; max-width: 100%; }
-.pin { position: absolute; width: 1.1rem; height: 1.1rem; margin: -.55rem 0 0 -.55rem; padding: 0; background: #ff5a6e; border: 2px solid #fff; border-radius: 50%; cursor: pointer; }
-.pin:hover, .pin.active { background: #6b4fd8; transform: scale(1.25); }
-.lore-box { position: fixed; right: 1rem; bottom: 1rem; width: min(24rem, calc(100vw - 2rem)); max-height: 60vh; overflow: auto; padding: 1rem 1.25rem; background: #1f1b2b; border: 1px solid #3a3450; border-radius: 8px; box-shadow: 0 8px 30px rgba(0, 0, 0, .5); }
-.lore-inline { position: static; width: auto; max-height: none; margin-top: 1.5rem; box-shadow: none; }
-.lore-box h2 { margin-top: 0; }
-.lore { white-space: pre-wrap; line-height: 1.5; }
-.lore-box .close { float: right; background: none; border: 0; font-size: 1.5rem; cursor: pointer; }
-.lore-box .enter { padding: .5rem 1rem; background: #6b4fd8; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
-</style>

@@ -178,30 +178,8 @@ function linkChecker(checkUrl, csrf) {
     );
 }
 
-const theme = EditorView.theme(
-    {
-        '&': { backgroundColor: '#1f1b2b', color: '#e8e4f0', border: '1px solid #3a3450', borderRadius: '4px', minHeight: '20rem' },
-        '&.cm-focused': { outline: '2px solid #6b4fd8' },
-        '.cm-content': { padding: '.75rem', caretColor: '#fff', fontFamily: 'system-ui, sans-serif', lineHeight: '1.6' },
-        '.cm-cursor': { borderLeftColor: '#fff' },
-        '.cm-scroller': { minHeight: '20rem' },
-        '.cm-h1': { fontSize: '1.8em', fontWeight: '700' },
-        '.cm-h2': { fontSize: '1.5em', fontWeight: '700' },
-        '.cm-h3': { fontSize: '1.25em', fontWeight: '700' },
-        '.cm-h4, .cm-h5, .cm-h6': { fontWeight: '700' },
-        '.cm-quote': { borderLeft: '3px solid #6b4fd8', paddingLeft: '.75rem', color: '#b9b2cc' },
-        '.cm-wikilink': { color: '#8ab4ff', textDecoration: 'underline', cursor: 'pointer' },
-        '.cm-wikilink-raw': { color: '#cdb8ff' },
-        '.cm-wikilink-missing': { color: '#7d778c', textDecorationStyle: 'dotted' },
-        '.cm-strong': { fontWeight: '700' },
-        '.cm-emphasis': { fontStyle: 'italic' },
-        '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': { backgroundColor: '#4a3d85' },
-        '.cm-tooltip.cm-tooltip-autocomplete': { backgroundColor: '#1f1b2b', border: '1px solid #3a3450' },
-        '.cm-tooltip-autocomplete ul li[aria-selected]': { backgroundColor: '#6b4fd8', color: '#fff' },
-        '.cm-completionDetail': { marginLeft: '.75rem', opacity: '.7', fontStyle: 'normal' },
-    },
-    { dark: true },
-);
+// Editor styling lives in resources/scss/admin.scss; this only flags the theme as dark.
+const theme = EditorView.darkTheme.of(true);
 
 function wikilinkAt(view, pos) {
     const line = view.state.doc.lineAt(pos);
@@ -221,14 +199,13 @@ function wikilinkAt(view, pos) {
 function pickCategory(x, y, options) {
     return new Promise((resolve) => {
         const menu = document.createElement('div');
-        Object.assign(menu.style, {
-            position: 'fixed', left: `${x}px`, top: `${y}px`, zIndex: 10000, background: '#1f1b2b', color: '#e8e4f0',
-            border: '1px solid #3a3450', borderRadius: '4px', padding: '.25rem', maxHeight: '50vh', overflowY: 'auto', font: '14px system-ui, sans-serif',
-        });
+        menu.className = 'category-picker';
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
         const search = document.createElement('input');
         search.type = 'search';
         search.placeholder = 'Create this link as… (type to search)';
-        Object.assign(search.style, { display: 'block', width: '16rem', boxSizing: 'border-box', margin: '.25rem', padding: '.35rem .5rem', background: '#2a2540', color: 'inherit', border: '1px solid #3a3450', borderRadius: '4px' });
+        search.className = 'category-picker-search';
         const list = document.createElement('div');
         menu.append(search, list);
 
@@ -247,7 +224,7 @@ function pickCategory(x, y, options) {
         let active = 0;
         const highlight = () => {
             [...list.children].forEach((button, index) => {
-                button.style.background = index === active ? '#6b4fd8' : 'none';
+                button.classList.toggle('active', index === active);
             });
         };
         const render = () => {
@@ -258,7 +235,7 @@ function pickCategory(x, y, options) {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.textContent = label;
-                Object.assign(button.style, { display: 'block', width: '100%', textAlign: 'left', border: '0', color: 'inherit', padding: '.25rem .5rem', cursor: 'pointer' });
+                button.className = 'category-picker-option';
                 button.onmouseenter = () => { active = index; highlight(); };
                 button.onmousedown = (event) => {
                     event.preventDefault();

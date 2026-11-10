@@ -156,7 +156,7 @@ const error = (name) => formErrors.value[name]?.[0];
                     <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
                 </span>
             </label>
-            <div ref="editorHost" />
+            <div ref="editorHost" class="markdown-editor" />
             <input type="hidden" name="description" :value="form.description">
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
 

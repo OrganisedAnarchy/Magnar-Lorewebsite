@@ -98,6 +98,13 @@ serves Laravel while a separate Vite container watches source files and serves
 the Vue and SCSS assets with hot module replacement. Changes to backend PHP,
 routes, Blade templates, Vue components, and SCSS are reflected automatically.
 
+The Vite container keeps its own `node_modules` volume. After pulling changes to
+`package.json` or `package-lock.json`, restart it to install the updated dependencies:
+
+```sh
+docker compose -f compose.yaml -f compose.dev.yaml restart vite
+```
+
 To stop the development stack:
 
 ```sh

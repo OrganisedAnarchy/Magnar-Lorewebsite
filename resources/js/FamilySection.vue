@@ -36,7 +36,7 @@ const add = async (event) => {
         <ul>
             <li v-for="member in state.members" :key="member.id">
                 <strong>{{ member.label }}:</strong> {{ member.name }}
-                <form style="display:inline" @submit.prevent="update(member, $event)">
+                <form class="inline" @submit.prevent="update(member, $event)">
                     <select name="relationship" :value="member.relationship" :aria-label="`Change relationship to ${member.name}`">
                         <option v-for="option in state.relationships" :key="option.value" :value="option.value">{{ option.label }}</option>
                     </select>
