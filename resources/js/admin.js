@@ -1,4 +1,6 @@
 import { createApp } from 'vue';
+import '@fortawesome/fontawesome-free/css/fontawesome.css';
+import '@fortawesome/fontawesome-free/css/solid.css';
 import EntryForm from './EntryForm.vue';
 import LanguageForm from './LanguageForm.vue';
 import BookForm from './BookForm.vue';

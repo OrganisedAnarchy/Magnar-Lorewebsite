@@ -6,7 +6,6 @@ use App\Models\Language;
 use App\Models\LoreEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 class DailyTaskTest extends TestCase
@@ -34,21 +33,45 @@ class DailyTaskTest extends TestCase
 
         Language::factory()->create();
 
-        $this->actingAs(User::factory()->create(['is_admin' => true]))
-            ->get(route('admin.daily-tasks.index'))
+        $response = $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->get(route('admin.entries.index'))
             ->assertOk()
-            ->assertViewIs('admin.daily-tasks.index')
-            ->assertViewHas('tasks', function (Collection $tasks): bool {
-                $this->assertSame(['cosmology', 'culture', 'history'], $tasks->pluck('category')->all());
-                $this->assertSame([0, 1, 2], $tasks->pluck('entries_count')->all());
-
-                return true;
-            })
+            ->assertSeeInOrder(['Cosmology', 'Culture & Society', 'History & Events'])
+            ->assertSee('0 entries currently in this category.')
+            ->assertSee('1 entry currently in this category.')
+            ->assertSee('2 entries currently in this category.')
             ->assertSee(route('admin.entries.create', ['category' => 'cosmology']))
             ->assertSee(route('admin.entries.create', ['category' => 'culture']))
             ->assertSee(route('admin.entries.create', ['category' => 'history']))
-            ->assertSee(route('admin.daily-tasks.index'))
+            ->assertDontSee(route('admin.entries.create', ['category' => 'items']))
+            ->assertDontSee(route('admin.entries.create', ['category' => 'languages']))
+            ->assertSee('fa-clipboard-list')
+            ->assertSee('aria-label="Daily Tasks"', false)
             ->assertSee('Daily Tasks');
+
+        $this->assertSame(3, substr_count($response->getContent(), 'currently in this category.'));
+    }
+
+    public function test_daily_tasks_tray_is_available_on_other_admin_pages(): void
+    {
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->get(route('admin.books.index'))
+            ->assertOk()
+            ->assertSee('aria-label="Daily Tasks"', false)
+            ->assertSee(route('admin.entries.create', ['category' => 'cosmology']));
+    }
+
+    public function test_previous_daily_tasks_url_redirects_to_the_open_tray(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $destination = route('admin.entries.index', ['tray' => 'daily-tasks']);
+
+        $this->actingAs($admin)->get(route('admin.daily-tasks.index'))
+            ->assertRedirect($destination);
+
+        $this->actingAs($admin)->get($destination)
+            ->assertOk()
+            ->assertSee('<details  open >', false);
     }
 
     public function test_guest_is_redirected_to_login_from_daily_tasks(): void

@@ -102,10 +102,21 @@
         .tag { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; background: #6b4fd8; border-radius: 999px; font-size: .9rem; }
         .tag button { padding: 0; background: none; border: 0; color: inherit; cursor: pointer; }
         .date-fields { padding: 0 .5rem .5rem; }
+        .sidebar-tray { position: fixed; z-index: 20; top: 35%; right: 0; }
+        .sidebar-tray summary { display: grid; place-items: center; width: 3rem; height: 3rem; background: #6b4fd8; color: #fff; border-radius: 6px 0 0 6px; cursor: pointer; list-style: none; }
+        .sidebar-tray summary::-webkit-details-marker { display: none; }
+        .sidebar-tray summary:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+        .sidebar-tray-content { position: absolute; top: 0; right: 3rem; width: min(21rem, calc(100vw - 4rem)); max-height: 60vh; box-sizing: border-box; overflow-y: auto; padding: 1rem; background: #1f1b2b; border: 1px solid #3a3450; border-radius: 6px 0 6px 6px; box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .35); }
+        .sidebar-tray-content h2 { margin: 0; color: #cdb8ff; }
+        .sidebar-tray-content h3 { margin-bottom: .5rem; color: #cdb8ff; font-size: 1rem; }
+        .sidebar-tray-content .panel { margin-top: 1rem; }
+        .sidebar-tray-content .btn { margin-top: .25rem; }
         @media (max-width: 40rem) {
             header { flex-wrap: wrap; gap: .75rem; }
             .lexicon-row { grid-template-columns: 1fr 1fr; }
             .date-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .sidebar-tray { top: auto; bottom: 1rem; }
+            .sidebar-tray-content { top: auto; bottom: 0; max-height: 70vh; }
         }
     </style>
     @stack('head')
@@ -114,7 +125,6 @@
     <header>
         <strong>Admin</strong>
         <a href="{{ route('admin.entries.index') }}">Lore</a>
-        <a href="{{ route('admin.daily-tasks.index') }}">Daily Tasks</a>
         <a href="{{ route('admin.languages.index') }}">Languages</a>
         <a href="{{ route('admin.books.index') }}">Books</a>
         <a href="{{ route('admin.locations.index') }}">Locations</a>
@@ -126,6 +136,7 @@
         </form>
     </header>
     <div id="toast-host" data-flash="{{ json_encode(session('status')) }}"></div>
+    @include('admin.daily-tasks.tray')
     <main>
         @yield('content')
     </main>
