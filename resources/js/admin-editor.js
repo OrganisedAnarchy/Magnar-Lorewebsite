@@ -5,33 +5,57 @@ import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/lang
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { acceptCompletion, autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
+import { extractHeadings, findHeading, findInternalLinks, parseWikilink } from './markdown-links.js';
 
 const hidden = Decoration.replace({});
 const wikilink = Decoration.mark({ class: 'cm-wikilink' });
 const wikilinkRaw = Decoration.mark({ class: 'cm-wikilink-raw' });
 const wikilinkMissing = Decoration.mark({ class: 'cm-wikilink cm-wikilink-missing' });
+const internalLink = Decoration.mark({ class: 'cm-wikilink cm-internal-link' });
 const linksChecked = StateEffect.define();
 // Whether a link resolves to an existing entry, keyed by title and category.
 const linkStatus = new Map();
 const linkKey = (link) => `${link.title.toLowerCase()}@${link.category.toLowerCase()}`;
 const markNodes = new Set(['HeaderMark', 'EmphasisMark', 'CodeMark', 'QuoteMark', 'StrikethroughMark']);
 
-// Syntax: [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]].
-// Offsets are relative to the text between the brackets.
-function parseWikilink(inner) {
-    const at = inner.lastIndexOf('@');
-    const left = at >= 0 ? inner.slice(0, at) : inner;
-    const category = at >= 0 ? inner.slice(at + 1).trim() : '';
-    const pipe = left.indexOf('|');
-    const title = (pipe >= 0 ? left.slice(0, pipe) : left).trim();
-    const hasAlias = pipe >= 0 && left.slice(pipe + 1).trim() !== '';
+// Internal links ([Heading]) are looked up against the whole document, so cache them per document version.
+const internalLinkCache = new WeakMap();
+function internalLinks(doc) {
+    let links = internalLinkCache.get(doc);
+    if (!links) {
+        links = findInternalLinks(doc.toString());
+        internalLinkCache.set(doc, links);
+    }
 
-    return {
-        title,
-        category,
-        displayStart: hasAlias ? pipe + 1 : 0,
-        displayEnd: hasAlias || pipe < 0 ? left.length : pipe,
-    };
+    return links;
+}
+
+function goToHeading(view, name) {
+    const heading = findHeading(extractHeadings(view.state.doc.toString()), name);
+    if (!heading) {
+        return false;
+    }
+    view.dispatch({
+        selection: { anchor: heading.from },
+        effects: EditorView.scrollIntoView(heading.from, { y: 'start', yMargin: 16 }),
+    });
+
+    return true;
+}
+
+// Set once an editor has scrolled to the heading named in the page's URL hash, so only one editor does.
+let hashHandled = false;
+function followLocationHash(view) {
+    if (hashHandled || !window.location.hash) {
+        return;
+    }
+    let name;
+    try {
+        name = decodeURIComponent(window.location.hash.slice(1));
+    } catch {
+        return;
+    }
+    hashHandled = goToHeading(view, name);
 }
 
 // Obsidian-style live preview: syntax marks are hidden except on lines the cursor is touching.
@@ -92,6 +116,20 @@ function livePreview(view) {
             items.push({ from: displayFrom, to: displayTo, deco: linkStatus.get(linkKey(parsed)) === false ? wikilinkMissing : wikilink });
             items.push({ from: displayTo, to: end, deco: hidden });
         }
+    }
+
+    for (const link of internalLinks(view.state.doc)) {
+        if (!view.visibleRanges.some(({ from, to }) => link.from >= from && link.to <= to)) {
+            continue;
+        }
+        const editing = view.state.selection.ranges.some((range) => range.from <= link.to && range.to >= link.from);
+        if (editing) {
+            items.push({ from: link.from, to: link.to, deco: wikilinkRaw });
+            continue;
+        }
+        items.push({ from: link.from, to: link.from + 1, deco: hidden });
+        items.push({ from: link.from + 1, to: link.to - 1, deco: internalLink });
+        items.push({ from: link.to - 1, to: link.to, deco: hidden });
     }
 
     items.sort((a, b) => a.from - b.from || a.deco.startSide - b.deco.startSide);
@@ -191,13 +229,15 @@ function wikilinkAt(view, pos) {
     for (const match of line.text.matchAll(/\[\[([^\]\n]+)\]\]/g)) {
         const start = line.from + match.index;
         if (pos >= start && pos <= start + match[0].length) {
-            const { title, category } = parseWikilink(match[1]);
+            const { title, heading, category } = parseWikilink(match[1]);
 
-            return { title, category, to: start + match[0].length };
+            return { title, heading, category, to: start + match[0].length };
         }
     }
 
-    return null;
+    const internal = internalLinks(view.state.doc).find((link) => pos >= link.from && pos <= link.to);
+
+    return internal ? { title: '', heading: internal.heading.text, category: '', to: internal.to } : null;
 }
 
 // Small popup next to the click asking which type a new link should be created as.
@@ -336,7 +376,7 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
             };
         }
 
-        const title = context.matchBefore(/\[\[[^\]\n|@]*/);
+        const title = context.matchBefore(/\[\[[^\]\n|@#]*/);
         if (!title) {
             return null;
         }
@@ -361,6 +401,15 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
     };
 
     const openLink = async (link, view, point) => {
+        // No page named: the link points at a heading in this same document.
+        if (!link.title) {
+            if (link.heading) {
+                goToHeading(view, link.heading);
+            }
+
+            return;
+        }
+
         // An uncategorised link that doesn't exist yet: ask what to create, then write it into the link.
         if (!link.category && linkStatus.get(linkKey(link)) !== true) {
             const chosen = await pickCategory(point.x, point.y, categories);
@@ -368,7 +417,7 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
                 return;
             }
             view.dispatch({ changes: { from: link.to - 2, insert: `@${chosen}` }, userEvent: 'input' });
-            link = { title: link.title, category: chosen };
+            link = { title: link.title, heading: link.heading, category: chosen };
         }
 
         const tab = window.open('', '_blank');
@@ -376,7 +425,7 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
             const response = await fetch(resolveUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
-                body: JSON.stringify(link),
+                body: JSON.stringify({ title: link.title, heading: link.heading || null, category: link.category }),
             });
             const data = await response.json();
             if (!response.ok) {
@@ -412,7 +461,7 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
         },
     });
 
-    return new EditorView({
+    const view = new EditorView({
         parent,
         state: EditorState.create({
             doc,
@@ -445,4 +494,8 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
             ],
         }),
     });
+
+    requestAnimationFrame(() => followLocationHash(view));
+
+    return view;
 }

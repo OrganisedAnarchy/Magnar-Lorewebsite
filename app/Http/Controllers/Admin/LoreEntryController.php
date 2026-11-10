@@ -96,10 +96,12 @@ class LoreEntryController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'heading' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
         ]);
 
         $title = trim($data['title']);
+        $fragment = LoreEntry::headingFragment($data['heading'] ?? null);
 
         if ($type = LoreEntry::resolveLinkType($data['category'] ?? null)) {
             $record = $type['model']::query()
@@ -112,7 +114,7 @@ class LoreEntryController extends Controller
 
             return response()->json([
                 'created' => $created,
-                'url' => route($type['route'], $record),
+                'url' => route($type['route'], $record).$fragment,
             ]);
         }
 
@@ -129,7 +131,7 @@ class LoreEntryController extends Controller
 
         return response()->json([
             'created' => $created,
-            'url' => route('admin.entries.edit', $entry),
+            'url' => route('admin.entries.edit', $entry).$fragment,
         ]);
     }
 

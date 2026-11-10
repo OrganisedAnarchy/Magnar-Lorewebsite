@@ -49,9 +49,9 @@ class LoreEntry extends Model
     ];
 
     /**
-     * Split the text of a wikilink into title, alias and category.
+     * Split the text of a wikilink into title, heading, alias and category.
      *
-     * @return array{title: string, alias: ?string, category: string}
+     * @return array{title: string, heading: ?string, alias: ?string, category: string}
      */
     public static function parseWikilink(string $inner): array
     {
@@ -60,12 +60,26 @@ class LoreEntry extends Model
         $category = $at === false ? '' : trim(substr($inner, $at + 1));
         $pipe = strpos($left, '|');
         $alias = $pipe === false ? null : trim(substr($left, $pipe + 1));
+        $target = $pipe === false ? $left : substr($left, 0, $pipe);
+        $hash = strpos($target, '#');
+        $heading = $hash === false ? '' : trim(substr($target, $hash + 1));
+        // A trailing "#" with nothing after it stays part of the title.
+        $title = $heading === '' ? $target : substr($target, 0, $hash);
 
         return [
-            'title' => trim($pipe === false ? $left : substr($left, 0, $pipe)),
+            'title' => trim($title),
+            'heading' => $heading === '' ? null : $heading,
             'alias' => $alias === '' ? null : $alias,
             'category' => $category,
         ];
+    }
+
+    /**
+     * The fragment that scrolls an edit page to a heading in its Markdown.
+     */
+    public static function headingFragment(?string $heading): string
+    {
+        return filled($heading) ? '#'.rawurlencode(trim($heading)) : '';
     }
 
     /**

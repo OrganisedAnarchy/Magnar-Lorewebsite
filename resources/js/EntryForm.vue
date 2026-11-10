@@ -127,7 +127,7 @@ const error = (name) => formErrors.value[name]?.[0];
             <label>Description
                 <span class="info-tip">
                     <button type="button" aria-label="Markdown and linking help" aria-describedby="description-help">i</button>
-                    <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
+                    <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Add #Heading to jump to a heading on that page, e.g. [[Title#Heading]]. Wrap a heading's text in single brackets, e.g. [Heading], to link to it within this page. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
                 </span>
             </label>
             <MarkdownEditor v-model="form.description" name="description" label="Description" :link-statuses="linkStatuses" />
