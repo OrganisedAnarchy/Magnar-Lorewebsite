@@ -29,12 +29,13 @@ class LocationMapTest extends TestCase
         $this->actingAs($this->admin())
             ->post(route('admin.locations.store'), [
                 'name' => 'Lomile',
-                'description' => 'A port town.',
+                'description' => '**A port town.**',
                 'map' => UploadedFile::fake()->image('lomile.png', 400, 300),
             ])
             ->assertRedirect(route('admin.locations.index'));
 
         $location = Location::where('name', 'Lomile')->firstOrFail();
+        $this->assertSame('**A port town.**', $location->description);
         $this->assertTrue($location->hasMap());
         Storage::disk('public')->assertExists($location->map_image_path);
     }

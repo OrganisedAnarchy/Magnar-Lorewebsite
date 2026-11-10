@@ -14,7 +14,7 @@
                     <td>{{ $language->name }}</td>
                     <td>{{ $language->words_count }}</td>
                     <td>
-                        <a href="{{ route('admin.languages.edit', $language) }}">Edit</a>
+                        <a class="btn btn-primary" href="{{ route('admin.languages.edit', $language) }}">Edit</a>
                         <form class="inline" method="POST" action="{{ route('admin.languages.destroy', $language) }}" data-ajax data-remove="tr" data-confirm="Delete this language?">
                             @csrf
                             @method('DELETE')

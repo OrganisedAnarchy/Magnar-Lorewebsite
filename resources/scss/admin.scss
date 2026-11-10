@@ -623,7 +623,7 @@ dialog.edit-dialog {
 .sidebar-tray {
     position: fixed;
     z-index: 20;
-    top: 35%;
+    top: 15%;
     right: 0;
 
     summary {
@@ -809,6 +809,94 @@ dialog.edit-dialog {
 .toast-leave-to {
     opacity: 0;
     transform: translateX(1.5rem);
+}
+
+.markdown-field {
+    position: relative;
+    margin-top: .35rem;
+}
+
+.markdown-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    padding: .4rem;
+    background: $surface-raised;
+    border: 1px solid $border;
+    border-radius: 4px 4px 0 0;
+
+    button {
+        padding: .3rem .5rem;
+        background: transparent;
+        color: $text;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        cursor: pointer;
+        font: inherit;
+        font-size: .85rem;
+
+        &:hover,
+        &:focus-visible,
+        &[aria-pressed='true'] {
+            background: $primary;
+            border-color: $accent;
+        }
+    }
+}
+
+.markdown-panes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+
+    &.has-preview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.markdown-preview {
+    min-width: 0;
+    min-height: 20rem;
+    padding: .75rem;
+    overflow-x: auto;
+    overflow-wrap: anywhere;
+    background: $surface;
+    border: 1px solid $border;
+    line-height: 1.6;
+
+    a {
+        color: $accent;
+    }
+
+    pre {
+        overflow-x: auto;
+    }
+
+    img {
+        max-width: 100%;
+    }
+}
+
+.markdown-validation {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+.markdown-field-compact {
+    .markdown-editor .cm-editor,
+    .markdown-editor .cm-editor .cm-scroller,
+    .markdown-preview {
+        min-height: 8rem;
+    }
+}
+
+@media (max-width: 40rem) {
+    .markdown-panes.has-preview {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 // Markdown editor (CodeMirror). Selectors are prefixed with .markdown-editor to outrank CodeMirror's own base theme.

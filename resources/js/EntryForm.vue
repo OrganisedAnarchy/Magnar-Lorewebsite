@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { createMarkdownEditor } from './admin-editor.js';
+import { computed, reactive } from 'vue';
+import MarkdownEditor from './MarkdownEditor.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -14,9 +14,7 @@ const props = defineProps({
     initial: { type: Object, required: true },
     errors: { type: Object, default: () => ({}) },
     categories: { type: Object, required: true },
-    linkTypes: { type: Array, default: () => [] },
     subCategories: { type: Object, default: () => ({}) },
-    urls: { type: Object, required: true },
     linkStatuses: { type: Array, default: () => [] },
     uncategorized: { type: Boolean, default: false },
 });
@@ -38,8 +36,6 @@ const pick = (source) => Object.fromEntries(fieldNames.map((name) => [
 ]));
 
 const form = reactive(pick(props.initial));
-const editorHost = ref(null);
-let editor = null;
 
 const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraft({
     key: props.draftKey,
@@ -51,28 +47,6 @@ const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraf
 const isPeople = computed(() => form.category === 'people');
 const subCategoryOptions = computed(() => props.subCategories[form.category] ?? []);
 const categoryList = computed(() => Object.entries(props.categories));
-
-watch(() => form.description, (value) => {
-    if (editor && editor.state.doc.toString() !== value) {
-        editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value } });
-    }
-});
-
-onMounted(() => {
-    editor = createMarkdownEditor(editorHost.value, {
-        doc: form.description,
-        onChange: (value) => { form.description = value; },
-        searchUrl: props.urls.search,
-        resolveUrl: props.urls.resolve,
-        checkUrl: props.urls.check,
-        categories: [...Object.values(props.categories).map((info) => info.label), ...props.linkTypes],
-        linkStatuses: props.linkStatuses,
-    });
-});
-
-onBeforeUnmount(() => {
-    editor?.destroy();
-});
 
 const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
     action: props.action,
@@ -156,8 +130,7 @@ const error = (name) => formErrors.value[name]?.[0];
                     <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
                 </span>
             </label>
-            <div ref="editorHost" class="markdown-editor" />
-            <input type="hidden" name="description" :value="form.description">
+            <MarkdownEditor v-model="form.description" name="description" label="Description" :link-statuses="linkStatuses" />
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
 
             <div class="form-actions">

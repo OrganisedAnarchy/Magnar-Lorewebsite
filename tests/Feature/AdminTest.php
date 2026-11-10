@@ -42,7 +42,11 @@ class AdminTest extends TestCase
             ])
             ->assertRedirect(route('admin.entries.index'));
 
-        $this->assertDatabaseHas('lore_entries', ['category' => 'magic', 'title' => 'Fireball']);
+        $this->assertDatabaseHas('lore_entries', [
+            'category' => 'magic',
+            'title' => 'Fireball',
+            'description' => "# Fireball\n\nSee [[Pyromancy]].",
+        ]);
     }
 
     public function test_new_sub_categories_are_saved_and_suggested_once(): void

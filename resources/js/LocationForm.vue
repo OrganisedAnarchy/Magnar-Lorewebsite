@@ -1,5 +1,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import MarkdownEditor from './MarkdownEditor.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -124,8 +125,8 @@ const onParentChange = () => {
             </select>
             <div v-if="error('celestial_kind')" class="error">{{ error('celestial_kind') }}</div>
 
-            <label for="summary">Summary</label>
-            <textarea id="summary" name="summary" v-model="form.summary" rows="3" maxlength="1000" required></textarea>
+            <label>Summary</label>
+            <MarkdownEditor v-model="form.summary" name="summary" label="Summary" :max-length="1000" required compact />
             <p class="hint">Shown when hovering the body on the celestial chart.</p>
             <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
         </template>
@@ -151,8 +152,8 @@ const onParentChange = () => {
             </template>
         </template>
 
-        <label for="description">Lore</label>
-        <textarea id="description" name="description" v-model="form.description" rows="8"></textarea>
+        <label>Lore</label>
+        <MarkdownEditor v-model="form.description" name="description" label="Lore" />
         <p v-if="isCelestialBody" class="hint">Separate paragraphs with a blank line.</p>
         <div v-if="error('description')" class="error">{{ error('description') }}</div>
 

@@ -19,7 +19,7 @@
                         <td>{{ $location->hasMap() ? 'Yes' : 'No' }}</td>
                         <td>{{ $location->children_count }}</td>
                         <td>
-                            <a href="{{ route('admin.locations.edit', $location) }}">Edit</a>
+                            <a class="btn btn-primary" href="{{ route('admin.locations.edit', $location) }}">Edit</a>
                             @unless ($location->isChartBody())
                                 <form class="inline" method="POST" action="{{ route('admin.locations.destroy', $location) }}" data-ajax data-remove="tr" data-confirm="Delete this location?">
                                     @csrf

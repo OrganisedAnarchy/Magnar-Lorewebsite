@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import MarkdownEditor from './MarkdownEditor.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -225,12 +226,12 @@ const closeLanguageList = () => {
         </fieldset>
 
         <section class="panel">
-            <label for="summary">Summary of contents</label>
-            <textarea id="summary" v-model="form.summary" name="summary" class="short" />
+            <label>Summary of contents</label>
+            <MarkdownEditor v-model="form.summary" name="summary" label="Summary of contents" compact />
             <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
 
-            <label for="content">Full text <span class="hint">(optional)</span></label>
-            <textarea id="content" v-model="form.content" name="content" />
+            <label>Full text <span class="hint">(optional)</span></label>
+            <MarkdownEditor v-model="form.content" name="content" label="Full text" />
             <div v-if="error('content')" class="error">{{ error('content') }}</div>
         </section>
 

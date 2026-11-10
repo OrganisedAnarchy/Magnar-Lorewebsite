@@ -8,7 +8,15 @@
     <title>@yield('title', 'Admin') · {{ config('app.name', 'The World of Magnar') }}</title>
     @stack('head')
 </head>
-<body>
+<body data-markdown-editor="{{ json_encode([
+    'searchUrl' => route('admin.entries.search'),
+    'resolveUrl' => route('admin.entries.resolve'),
+    'checkUrl' => route('admin.entries.check'),
+    'categories' => array_merge(
+        array_column(\App\Models\LoreEntry::CATEGORIES, 'label'),
+        collect(\App\Models\LoreEntry::linkTypes())->pluck('label')->all(),
+    ),
+]) }}">
     <header>
         <strong>Admin</strong>
         <a href="{{ route('admin.entries.index') }}">Lore</a>

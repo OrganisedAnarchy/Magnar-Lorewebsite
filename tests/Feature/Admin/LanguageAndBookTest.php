@@ -24,14 +24,15 @@ class LanguageAndBookTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.languages.store'), [
             'name' => 'Old Tongue',
+            'description' => '**An ancient language.**',
             'phonemes' => ['p', 'a', 'a', 'ʃ'],
             'syllables' => [
                 ['ipa' => 'ka', 'romanized' => 'ka'],
                 ['ipa' => 'ʃa', 'romanized' => 'sha'],
                 ['ipa' => 'ka', 'romanized' => 'ka'],
             ],
-            'grammar' => 'SOV',
-            'writing_system' => 'Runic',
+            'grammar' => '## Word order',
+            'writing_system' => '*Runic*',
             'words' => [
                 ['word' => 'kato', 'meaning' => 'sun'],
                 ['word' => 'toka', 'meaning' => 'moon', 'notes' => 'poetic'],
@@ -41,7 +42,9 @@ class LanguageAndBookTest extends TestCase
         $language = Language::firstOrFail();
         $this->assertSame(['p', 'a', 'ʃ'], $language->phonemes);
         $this->assertSame([['ipa' => 'ka', 'romanized' => 'ka'], ['ipa' => 'ʃa', 'romanized' => 'sha']], $language->syllables);
-        $this->assertSame('Runic', $language->writing_system);
+        $this->assertSame('**An ancient language.**', $language->description);
+        $this->assertSame('## Word order', $language->grammar);
+        $this->assertSame('*Runic*', $language->writing_system);
         $this->assertCount(2, $language->words);
 
         $this->actingAs($admin)->put(route('admin.languages.update', $language), [
@@ -83,7 +86,8 @@ class LanguageAndBookTest extends TestCase
             'title' => 'The Lost Annals',
             'author_name' => 'Verin Ashdale',
             'languages' => ['Common', 'Elvish', 'common'],
-            'summary' => 'A history.',
+            'summary' => '**A history.**',
+            'content' => "# Chapter one\n\nThe beginning.",
             'published_day' => 3,
             'published_month' => 4,
             'published_cycle' => 1,
@@ -91,6 +95,8 @@ class LanguageAndBookTest extends TestCase
         ])->assertRedirect(route('admin.books.index'));
 
         $book = Book::firstOrFail();
+        $this->assertSame('**A history.**', $book->summary);
+        $this->assertSame("# Chapter one\n\nThe beginning.", $book->content);
         $this->assertSame(['Common', 'Elvish'], $book->languages);
         $this->assertSame(120, $book->published_year);
         $this->assertSame('Verin Ashdale', $book->author->title);

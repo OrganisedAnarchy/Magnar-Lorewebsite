@@ -1,5 +1,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import MarkdownEditor from './MarkdownEditor.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -271,8 +272,8 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             <input id="name" v-model="form.name" name="name" required>
             <div v-if="error('name')" class="error">{{ error('name') }}</div>
 
-            <label for="description">Description</label>
-            <textarea id="description" v-model="form.description" name="description" class="short" />
+            <label>Description</label>
+            <MarkdownEditor v-model="form.description" name="description" label="Description" compact />
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
         </section>
 
@@ -282,7 +283,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             <IpaPicker v-model="phonemes" name="phonemes" :errors="nestedErrors('phonemes')" />
 
             <label for="phonology_notes">Phonology notes</label>
-            <textarea id="phonology_notes" v-model="form.phonology_notes" name="phonology_notes" class="short" placeholder="Allophony, stress, tone, phonotactics…" />
+            <MarkdownEditor v-model="form.phonology_notes" name="phonology_notes" label="Phonology notes" compact placeholder="Allophony, stress, tone, phonotactics…" />
         </section>
         -->
 
@@ -412,13 +413,13 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 
         <section class="panel">
             <h2>Grammar</h2>
-            <textarea id="grammar" v-model="form.grammar" name="grammar" aria-label="Grammar" placeholder="Word order, cases, tenses, agreement…" />
+            <MarkdownEditor v-model="form.grammar" name="grammar" label="Grammar" placeholder="Word order, cases, tenses, agreement…" />
             <div v-if="error('grammar')" class="error">{{ error('grammar') }}</div>
         </section>
 
         <section class="panel">
             <h2>Writing system</h2>
-            <textarea id="writing_system" v-model="form.writing_system" name="writing_system" aria-label="Writing system" placeholder="Script, direction, letters, punctuation…" />
+            <MarkdownEditor v-model="form.writing_system" name="writing_system" label="Writing system" placeholder="Script, direction, letters, punctuation…" />
             <div v-if="error('writing_system')" class="error">{{ error('writing_system') }}</div>
         </section>
 

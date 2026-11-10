@@ -1,9 +1,10 @@
-import { EditorView, ViewPlugin, Decoration, drawSelection, keymap } from '@codemirror/view';
+import { EditorView, ViewPlugin, Decoration, drawSelection, keymap, placeholder as editorPlaceholder } from '@codemirror/view';
 import { EditorState, RangeSetBuilder, StateEffect } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
-import { syntaxTree } from '@codemirror/language';
+import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/language';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { acceptCompletion, autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import { tags } from '@lezer/highlight';
 
 const hidden = Decoration.replace({});
 const wikilink = Decoration.mark({ class: 'cm-wikilink' });
@@ -180,6 +181,10 @@ function linkChecker(checkUrl, csrf) {
 
 // Editor styling lives in resources/scss/admin.scss; this only flags the theme as dark.
 const theme = EditorView.darkTheme.of(true);
+const markdownHighlight = HighlightStyle.define([
+    { tag: tags.strong, class: 'cm-strong' },
+    { tag: tags.emphasis, class: 'cm-emphasis' },
+]);
 
 function wikilinkAt(view, pos) {
     const line = view.state.doc.lineAt(pos);
@@ -305,7 +310,7 @@ const bracketHelper = EditorView.inputHandler.of((view, from, to, text) => {
     return false;
 });
 
-export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolveUrl, checkUrl, categories = [], linkStatuses = [] }) {
+export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolveUrl, checkUrl, categories = [], linkStatuses = [], label, placeholder = '', maxLength = null, required = false }) {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
     for (const link of linkStatuses) {
@@ -419,7 +424,16 @@ export function createMarkdownEditor(parent, { doc, onChange, searchUrl, resolve
                 drawSelection(),
                 keymap.of([{ key: 'Tab', run: acceptCompletion }, ...completionKeymap, ...defaultKeymap, ...historyKeymap]),
                 markdown(),
+                syntaxHighlighting(markdownHighlight),
+                editorPlaceholder(placeholder),
                 EditorView.lineWrapping,
+                EditorView.contentAttributes.of({ 'aria-label': label, 'aria-multiline': 'true', 'aria-required': String(required) }),
+                EditorState.transactionFilter.of((transaction) => {
+                    if (maxLength !== null && transaction.docChanged && transaction.newDoc.length > maxLength && transaction.newDoc.length > transaction.startState.doc.length) {
+                        return [];
+                    }
+                    return transaction;
+                }),
                 livePreviewPlugin,
                 linkChecker(checkUrl, csrf),
                 theme,

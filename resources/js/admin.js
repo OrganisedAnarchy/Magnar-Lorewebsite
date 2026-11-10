@@ -29,23 +29,30 @@ const languageMount = document.getElementById('language-form-app');
 const bookMount = document.getElementById('book-form-app');
 const locationMount = document.getElementById('location-form-app');
 const extrasMount = document.getElementById('entry-extras-app');
+const markdownEditorConfig = JSON.parse(document.body.dataset.markdownEditor);
+
+const mountForm = (component, element) => {
+    const app = createApp(component, JSON.parse(element.dataset.props));
+    app.provide('markdownEditorConfig', markdownEditorConfig);
+    app.mount(element);
+};
 
 if (extrasMount) {
     createApp(EntryExtras, JSON.parse(extrasMount.dataset.props)).mount(extrasMount);
 }
 
 if (locationMount) {
-    createApp(LocationForm, JSON.parse(locationMount.dataset.props)).mount(locationMount);
+    mountForm(LocationForm, locationMount);
 }
 
 if (entryMount) {
-    createApp(EntryForm, JSON.parse(entryMount.dataset.props)).mount(entryMount);
+    mountForm(EntryForm, entryMount);
 }
 
 if (languageMount) {
-    createApp(LanguageForm, JSON.parse(languageMount.dataset.props)).mount(languageMount);
+    mountForm(LanguageForm, languageMount);
 }
 
 if (bookMount) {
-    createApp(BookForm, JSON.parse(bookMount.dataset.props)).mount(bookMount);
+    mountForm(BookForm, bookMount);
 }
