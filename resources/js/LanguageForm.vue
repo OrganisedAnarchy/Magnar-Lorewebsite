@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import MarkdownEditor from './MarkdownEditor.vue';
+import ImageField from './ImageField.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -18,6 +19,8 @@ const props = defineProps({
     draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     swadesh: { type: Array, default: () => [] },
+    currentImageUrl: { type: String, default: null },
+    imageLabel: { type: String, default: 'Image' },
     errors: { type: Object, default: () => ({}) },
     cancelUrl: { type: String, required: true },
 });
@@ -58,11 +61,16 @@ const generated = ref([]);
 const generatedText = ref([]);
 const showMissing = ref(false);
 
+const currentImage = ref(props.currentImageUrl);
+
 const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
     action: props.action,
     method: props.method,
     errors: props.errors,
-    onSaved: (data) => markSaved(data.id),
+    onSaved: (data) => {
+        currentImage.value = data.image_url ?? null;
+        markSaved(data.id);
+    },
 });
 
 const error = (name) => formErrors.value[name]?.[0];
@@ -260,7 +268,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 </script>
 
 <template>
-    <form method="POST" class="language-form" :action="formAction" @submit.prevent="submit">
+    <form method="POST" enctype="multipart/form-data" class="language-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
@@ -272,8 +280,10 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             <input id="name" v-model="form.name" name="name" required>
             <div v-if="error('name')" class="error">{{ error('name') }}</div>
 
+            <ImageField :label="imageLabel" :current-url="currentImage" :error="error('image')" />
+
             <label>Description</label>
-            <MarkdownEditor v-model="form.description" name="description" label="Description" compact />
+            <MarkdownEditor v-model="form.description" name="description" label="Description" :alt-text="form.name" compact />
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
         </section>
 
@@ -283,7 +293,7 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
             <IpaPicker v-model="phonemes" name="phonemes" :errors="nestedErrors('phonemes')" />
 
             <label for="phonology_notes">Phonology notes</label>
-            <MarkdownEditor v-model="form.phonology_notes" name="phonology_notes" label="Phonology notes" compact placeholder="Allophony, stress, tone, phonotactics…" />
+            <MarkdownEditor v-model="form.phonology_notes" name="phonology_notes" label="Phonology notes" :alt-text="form.name" compact placeholder="Allophony, stress, tone, phonotactics…" />
         </section>
         -->
 
@@ -413,13 +423,13 @@ const coveragePercent = computed(() => (props.swadesh.length ? Math.round((cover
 
         <section class="panel">
             <h2>Grammar</h2>
-            <MarkdownEditor v-model="form.grammar" name="grammar" label="Grammar" placeholder="Word order, cases, tenses, agreement…" />
+            <MarkdownEditor v-model="form.grammar" name="grammar" label="Grammar" :alt-text="form.name" placeholder="Word order, cases, tenses, agreement…" />
             <div v-if="error('grammar')" class="error">{{ error('grammar') }}</div>
         </section>
 
         <section class="panel">
             <h2>Writing system</h2>
-            <MarkdownEditor v-model="form.writing_system" name="writing_system" label="Writing system" placeholder="Script, direction, letters, punctuation…" />
+            <MarkdownEditor v-model="form.writing_system" name="writing_system" label="Writing system" :alt-text="form.name" placeholder="Script, direction, letters, punctuation…" />
             <div v-if="error('writing_system')" class="error">{{ error('writing_system') }}</div>
         </section>
 

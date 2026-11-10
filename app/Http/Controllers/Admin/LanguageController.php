@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LanguageRequest;
 use App\Models\Language;
+use App\Support\LoreImages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -28,7 +30,7 @@ class LanguageController extends Controller
     public function store(LanguageRequest $request): JsonResponse|RedirectResponse
     {
         $language = new Language;
-        $this->persist($language, $request->validated());
+        $this->persist($language, $request);
 
         return $this->respond($request, redirect()->route('admin.languages.index'), 'Language created.', $this->savedPayload($language));
     }
@@ -40,20 +42,21 @@ class LanguageController extends Controller
 
     public function update(LanguageRequest $request, Language $language): JsonResponse|RedirectResponse
     {
-        $this->persist($language, $request->validated());
+        $this->persist($language, $request);
 
         return $this->respond($request, redirect()->route('admin.languages.index'), 'Language updated.', $this->savedPayload($language));
     }
 
     public function destroy(Request $request, Language $language): JsonResponse|RedirectResponse
     {
+        LoreImages::delete($language->image_path);
         $language->delete();
 
         return $this->respond($request, redirect()->route('admin.languages.index'), 'Language deleted.');
     }
 
     /**
-     * @return array{id: int, action: string, method: string, edit_url: string}
+     * @return array{id: int, action: string, method: string, edit_url: string, image_url: ?string}
      */
     private function savedPayload(Language $language): array
     {
@@ -62,16 +65,17 @@ class LanguageController extends Controller
             'action' => route('admin.languages.update', $language),
             'method' => 'PUT',
             'edit_url' => route('admin.languages.edit', $language),
+            'image_url' => $language->imageUrl(),
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function persist(Language $language, array $data): void
+    private function persist(Language $language, LanguageRequest $request): void
     {
+        $data = Arr::except($request->validated(), ['image', 'remove_image']);
         $words = $data['words'] ?? [];
         unset($data['words']);
+
+        $data = [...$data, ...LoreImages::fromRequest($request, $language->image_path, Language::imageFolder())];
 
         $data['phonemes'] = array_values(array_unique($data['phonemes'] ?? $language->phonemes ?? []));
         $data['syllables'] = collect($data['syllables'] ?? [])

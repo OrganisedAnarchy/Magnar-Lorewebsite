@@ -26,11 +26,37 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'dod_year',
     'dod_is_circa',
     'dod_is_unknown',
+    'image_path',
 ])]
 class LoreEntry extends Model
 {
     /** @use HasFactory<LoreEntryFactory> */
     use HasFactory;
+
+    use HasLoreImage;
+
+    /**
+     * What an entry's image is called, by category.
+     *
+     * @var array<string, string>
+     */
+    public const IMAGE_LABELS = [
+        'magic' => 'Illustration',
+        'organisations' => 'Emblem',
+        'nature' => 'Illustration',
+        'people' => 'Portrait',
+        'religion' => 'Symbol',
+        'technology' => 'Diagram',
+        'items' => 'Depiction',
+        'history' => 'Illustration',
+        'culture' => 'Illustration',
+        'cosmology' => 'Illustration',
+    ];
+
+    public function imageLabel(): string
+    {
+        return self::IMAGE_LABELS[$this->category] ?? 'Image';
+    }
 
     /**
      * @var array<string, array{label: string, examples: string}>

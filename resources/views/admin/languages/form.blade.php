@@ -21,6 +21,8 @@
             'words' => old('words', $language->words->map->only(['word', 'meaning', 'notes'])->values()->all()),
         ],
         'swadesh' => config('swadesh.list'),
+        'currentImageUrl' => $language->imageUrl(),
+        'imageLabel' => $language->imageLabel(),
         'errors' => $errors->getMessages(),
         'cancelUrl' => route('admin.languages.index'),
     ]) }}"></div>

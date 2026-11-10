@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BookRequest;
 use App\Models\Book;
 use App\Models\Language;
+use App\Support\LoreImages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -32,7 +34,7 @@ class BookController extends Controller
     public function store(BookRequest $request): JsonResponse|RedirectResponse
     {
         $book = new Book;
-        $this->persist($book, $request->validated());
+        $this->persist($book, $request);
 
         return $this->respond($request, redirect()->route('admin.books.index'), 'Book created.', $this->savedPayload($book));
     }
@@ -47,20 +49,21 @@ class BookController extends Controller
 
     public function update(BookRequest $request, Book $book): JsonResponse|RedirectResponse
     {
-        $this->persist($book, $request->validated());
+        $this->persist($book, $request);
 
         return $this->respond($request, redirect()->route('admin.books.index'), 'Book updated.', $this->savedPayload($book));
     }
 
     public function destroy(Request $request, Book $book): JsonResponse|RedirectResponse
     {
+        LoreImages::delete($book->image_path);
         $book->delete();
 
         return $this->respond($request, redirect()->route('admin.books.index'), 'Book deleted.');
     }
 
     /**
-     * @return array{id: int, action: string, method: string, edit_url: string}
+     * @return array{id: int, action: string, method: string, edit_url: string, image_url: ?string}
      */
     private function savedPayload(Book $book): array
     {
@@ -69,6 +72,7 @@ class BookController extends Controller
             'action' => route('admin.books.update', $book),
             'method' => 'PUT',
             'edit_url' => route('admin.books.edit', $book),
+            'image_url' => $book->imageUrl(),
         ];
     }
 
@@ -80,13 +84,13 @@ class BookController extends Controller
         return Language::query()->orderBy('name')->pluck('name')->prepend(Book::DEFAULT_LANGUAGE)->unique()->values()->all();
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function persist(Book $book, array $data): void
+    private function persist(Book $book, BookRequest $request): void
     {
+        $data = Arr::except($request->validated(), ['image', 'remove_image']);
         $authorName = trim((string) ($data['author_name'] ?? ''));
         unset($data['author_name']);
+
+        $data = [...$data, ...LoreImages::fromRequest($request, $book->image_path, Book::imageFolder())];
 
         $data['languages'] = collect($data['languages'] ?? [])
             ->map(fn (string $name): string => trim($name))

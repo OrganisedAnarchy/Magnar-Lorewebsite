@@ -8,11 +8,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'phonemes', 'phonology_notes', 'syllables', 'grammar', 'writing_system'])]
+#[Fillable(['name', 'description', 'phonemes', 'phonology_notes', 'syllables', 'grammar', 'writing_system', 'image_path'])]
 class Language extends Model
 {
     /** @use HasFactory<LanguageFactory> */
     use HasFactory;
+
+    use HasLoreImage;
+
+    public function imageLabel(): string
+    {
+        return 'Script sample';
+    }
 
     /**
      * @return array<string, string>

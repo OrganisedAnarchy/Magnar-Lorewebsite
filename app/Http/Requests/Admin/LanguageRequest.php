@@ -2,11 +2,17 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\LoreImages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class LanguageRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['remove_image' => $this->boolean('remove_image')]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -23,6 +29,8 @@ class LanguageRequest extends FormRequest
             'syllables.*.romanized' => ['required', 'string', 'max:20'],
             'grammar' => ['nullable', 'string'],
             'writing_system' => ['nullable', 'string'],
+            'image' => ['nullable', ...LoreImages::FILE_RULES],
+            'remove_image' => ['boolean'],
             'words' => ['nullable', 'array', 'max:5000'],
             'words.*.word' => ['required', 'string', 'max:255'],
             'words.*.meaning' => ['nullable', 'string', 'max:255'],

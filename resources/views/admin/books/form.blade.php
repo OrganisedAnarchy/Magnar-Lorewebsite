@@ -28,6 +28,8 @@
         'languageOptions' => $languageOptions,
         'errors' => $errors->getMessages(),
         'searchUrl' => route('admin.entries.search'),
+        'currentImageUrl' => $book->imageUrl(),
+        'imageLabel' => $book->imageLabel(),
         'cancelUrl' => route('admin.books.index'),
     ]) }}"></div>
 @endsection

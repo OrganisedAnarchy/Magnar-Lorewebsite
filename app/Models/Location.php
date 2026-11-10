@@ -12,11 +12,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'description', 'is_celestial_body', 'summary', 'celestial_kind', 'location_type', 'building_type', 'settlement_type', 'parent_id', 'map_image_path', 'pin_x', 'pin_y'])]
+#[Fillable(['name', 'description', 'is_celestial_body', 'summary', 'celestial_kind', 'location_type', 'building_type', 'settlement_type', 'parent_id', 'map_image_path', 'pin_x', 'pin_y', 'image_path'])]
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
     use HasFactory;
+
+    use HasLoreImage;
+
+    public function imageLabel(): string
+    {
+        return 'Picture';
+    }
 
     public const CELESTIAL_KINDS = ['Planet', 'Moon', 'Sun'];
 

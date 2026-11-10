@@ -1,4 +1,4 @@
-import { EditorView, ViewPlugin, Decoration, drawSelection, keymap, placeholder as editorPlaceholder } from '@codemirror/view';
+import { EditorView, ViewPlugin, Decoration, WidgetType, drawSelection, keymap, placeholder as editorPlaceholder } from '@codemirror/view';
 import { EditorState, RangeSetBuilder, StateEffect } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/language';
@@ -6,6 +6,31 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { acceptCompletion, autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
 import { extractHeadings, findHeading, findInternalLinks, parseWikilink } from './markdown-links.js';
+import { IMAGE_EMBED } from './markdown-formatting.js';
+
+// Shows an embedded {{url|alt}} image in place of its text while the cursor is elsewhere.
+class ImageEmbedWidget extends WidgetType {
+    constructor(url, alt) {
+        super();
+        this.url = url;
+        this.alt = alt;
+    }
+
+    eq(other) {
+        return other.url === this.url && other.alt === this.alt;
+    }
+
+    toDOM() {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'cm-image-embed';
+        const image = document.createElement('img');
+        image.src = this.url;
+        image.alt = this.alt;
+        wrapper.append(image);
+
+        return wrapper;
+    }
+}
 
 const hidden = Decoration.replace({});
 const wikilink = Decoration.mark({ class: 'cm-wikilink' });
@@ -115,6 +140,20 @@ function livePreview(view) {
             items.push({ from: start, to: displayFrom, deco: hidden });
             items.push({ from: displayFrom, to: displayTo, deco: linkStatus.get(linkKey(parsed)) === false ? wikilinkMissing : wikilink });
             items.push({ from: displayTo, to: end, deco: hidden });
+        }
+    }
+
+    for (const { from, to } of view.visibleRanges) {
+        const text = view.state.doc.sliceString(from, to);
+        for (const match of text.matchAll(IMAGE_EMBED)) {
+            const start = from + match.index;
+            const end = start + match[0].length;
+            const editing = view.state.selection.ranges.some((range) => range.from <= end && range.to >= start);
+            items.push({
+                from: start,
+                to: end,
+                deco: editing ? wikilinkRaw : Decoration.replace({ widget: new ImageEmbedWidget(match[1], match[2].trim()) }),
+            });
         }
     }
 

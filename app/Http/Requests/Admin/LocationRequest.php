@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\Location;
+use App\Support\LoreImages;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,7 @@ class LocationRequest extends FormRequest
     {
         $isCelestialBody = $this->boolean('is_celestial_body') || $this->chartBody() !== null;
 
-        $this->merge(['remove_map' => $this->boolean('remove_map'), 'is_celestial_body' => $isCelestialBody]);
+        $this->merge(['remove_map' => $this->boolean('remove_map'), 'remove_image' => $this->boolean('remove_image'), 'is_celestial_body' => $isCelestialBody]);
 
         if (blank($this->input('parent_id')) || $isCelestialBody) {
             $this->merge(['parent_id' => null, 'pin_x' => null, 'pin_y' => null]);
@@ -59,6 +60,8 @@ class LocationRequest extends FormRequest
             'pin_y' => ['nullable', 'required_with:parent_id', 'numeric', 'between:0,100'],
             'map' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'remove_map' => ['boolean'],
+            'image' => ['nullable', ...LoreImages::FILE_RULES],
+            'remove_image' => ['boolean'],
         ];
     }
 

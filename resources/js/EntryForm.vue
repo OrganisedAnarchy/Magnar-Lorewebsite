@@ -1,6 +1,7 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import MarkdownEditor from './MarkdownEditor.vue';
+import ImageField from './ImageField.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -17,6 +18,8 @@ const props = defineProps({
     subCategories: { type: Object, default: () => ({}) },
     linkStatuses: { type: Array, default: () => [] },
     uncategorized: { type: Boolean, default: false },
+    imageLabels: { type: Object, default: () => ({}) },
+    currentImageUrl: { type: String, default: null },
 });
 
 const dateParts = { day: [1, 30], month: [1, 13], cycle: [1, 2], year: [0, null] };
@@ -47,12 +50,15 @@ const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraf
 const isPeople = computed(() => form.category === 'people');
 const subCategoryOptions = computed(() => props.subCategories[form.category] ?? []);
 const categoryList = computed(() => Object.entries(props.categories));
+const imageLabel = computed(() => props.imageLabels[form.category] ?? 'Image');
+const currentImage = ref(props.currentImageUrl);
 
 const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
     action: props.action,
     method: props.method,
     errors: props.errors,
     onSaved: (data) => {
+        currentImage.value = data.image_url ?? null;
         markSaved(data.id);
         // Family and organisation sections depend on the saved category.
         window.dispatchEvent(new CustomEvent('entry-saved', { detail: { extras: data.extras } }));
@@ -63,7 +69,7 @@ const error = (name) => formErrors.value[name]?.[0];
 </script>
 
 <template>
-    <form method="POST" class="entry-form" :action="formAction" @submit.prevent="submit">
+    <form method="POST" enctype="multipart/form-data" class="entry-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
@@ -124,13 +130,15 @@ const error = (name) => formErrors.value[name]?.[0];
         </div>
 
         <div class="main-fields">
+            <ImageField :label="imageLabel" :current-url="currentImage" :error="error('image')" />
+
             <label>Description
                 <span class="info-tip">
                     <button type="button" aria-label="Markdown and linking help" aria-describedby="description-help">i</button>
                     <span id="description-help" class="info-tip-text" role="tooltip">Markdown. Link with [[Title]], [[Title|Alias]], [[Title@Category]] or [[Title|Alias@Category]]. Add #Heading to jump to a heading on that page, e.g. [[Title#Heading]]. Wrap a heading's text in single brackets, e.g. [Heading], to link to it within this page. Categories include Locations, Languages and Books, which link to their own pages. Type 3+ letters for suggestions (Tab completes); Ctrl/Cmd+click a link to open it, creating it if needed.</span>
                 </span>
             </label>
-            <MarkdownEditor v-model="form.description" name="description" label="Description" :link-statuses="linkStatuses" />
+            <MarkdownEditor v-model="form.description" name="description" label="Description" :alt-text="form.title" :link-statuses="linkStatuses" />
             <div v-if="error('description')" class="error">{{ error('description') }}</div>
 
             <div class="form-actions">

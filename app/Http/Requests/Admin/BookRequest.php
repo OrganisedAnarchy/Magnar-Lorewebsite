@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\LoreImages;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BookRequest extends FormRequest
@@ -15,6 +16,7 @@ class BookRequest extends FormRequest
         $normalized = [
             'published_is_unknown' => $isUnknown,
             'published_is_circa' => ! $isUnknown && $this->boolean('published_is_circa'),
+            'remove_image' => $this->boolean('remove_image'),
         ];
 
         if ($isUnknown) {
@@ -43,6 +45,8 @@ class BookRequest extends FormRequest
             'content' => ['nullable', 'string'],
             'published_is_circa' => ['boolean'],
             'published_is_unknown' => ['boolean'],
+            'image' => ['nullable', ...LoreImages::FILE_RULES],
+            'remove_image' => ['boolean'],
         ];
 
         foreach ($components as $component => $range) {

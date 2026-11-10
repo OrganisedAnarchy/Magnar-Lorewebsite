@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import MarkdownEditor from './MarkdownEditor.vue';
+import ImageField from './ImageField.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -13,6 +14,8 @@ const props = defineProps({
     draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     currentMapUrl: { type: String, default: null },
+    currentImageUrl: { type: String, default: null },
+    imageLabel: { type: String, default: 'Image' },
     hasChildren: { type: Boolean, default: false },
     isChartBody: { type: Boolean, default: false },
     celestialKinds: { type: Array, default: () => [] },
@@ -50,6 +53,7 @@ const { draftState, restoredAt, savedAt, discardDraft, markSaved } = useFormDraf
 });
 
 const currentMap = ref(props.currentMapUrl);
+const currentImage = ref(props.currentImageUrl);
 const mapInput = ref(null);
 
 const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
@@ -58,6 +62,7 @@ const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
     errors: props.errors,
     onSaved: (data) => {
         currentMap.value = data.map_url ?? null;
+        currentImage.value = data.image_url ?? null;
         form.remove_map = false;
         markSaved(data.id);
         if (newMapPreview.value) {
@@ -126,7 +131,7 @@ const onParentChange = () => {
             <div v-if="error('celestial_kind')" class="error">{{ error('celestial_kind') }}</div>
 
             <label>Summary</label>
-            <MarkdownEditor v-model="form.summary" name="summary" label="Summary" :max-length="1000" required compact />
+            <MarkdownEditor v-model="form.summary" name="summary" label="Summary" :max-length="1000" :alt-text="form.name" required compact />
             <p class="hint">Shown when hovering the body on the celestial chart.</p>
             <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
         </template>
@@ -152,8 +157,10 @@ const onParentChange = () => {
             </template>
         </template>
 
+        <ImageField :label="imageLabel" :current-url="currentImage" :error="error('image')" />
+
         <label>Lore</label>
-        <MarkdownEditor v-model="form.description" name="description" label="Lore" />
+        <MarkdownEditor v-model="form.description" name="description" label="Lore" :alt-text="form.name" />
         <p v-if="isCelestialBody" class="hint">Separate paragraphs with a blank line.</p>
         <div v-if="error('description')" class="error">{{ error('description') }}</div>
 

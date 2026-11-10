@@ -30,6 +30,8 @@
         'buildingType' => \App\Models\Location::TYPE_BUILDING,
         'settlementType' => \App\Models\Location::TYPE_RELIGIOUS_SETTLEMENT,
         'currentMapUrl' => $location->mapUrl(),
+        'currentImageUrl' => $location->imageUrl(),
+        'imageLabel' => $location->imageLabel(),
         'hasChildren' => $location->exists && $location->children()->exists(),
         'parentOptions' => $parentOptions,
         'errors' => $errors->getMessages(),

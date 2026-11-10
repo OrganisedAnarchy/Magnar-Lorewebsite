@@ -7,9 +7,11 @@ use App\Http\Requests\Admin\LoreEntryRequest;
 use App\Models\LoreEntry;
 use App\Models\SubCategory;
 use App\Support\EntryExtras;
+use App\Support\LoreImages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\View\View;
 
 class LoreEntryController extends Controller
@@ -147,7 +149,7 @@ class LoreEntryController extends Controller
 
     public function store(LoreEntryRequest $request): JsonResponse|RedirectResponse
     {
-        $data = $request->validated();
+        $data = $this->entryData($request, new LoreEntry);
         $entry = LoreEntry::create($data);
         SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
@@ -164,7 +166,7 @@ class LoreEntryController extends Controller
 
     public function update(LoreEntryRequest $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
-        $data = $request->validated();
+        $data = $this->entryData($request, $entry);
         $entry->update($data);
         SubCategory::remember($data['category'], $data['sub_category'] ?? null);
 
@@ -173,15 +175,28 @@ class LoreEntryController extends Controller
 
     public function destroy(Request $request, LoreEntry $entry): JsonResponse|RedirectResponse
     {
+        LoreImages::delete($entry->image_path);
         $entry->delete();
 
         return $this->respond($request, redirect()->route('admin.entries.index'), 'Entry deleted.');
     }
 
     /**
+     * The validated fields, with the uploaded image swapped for its stored path.
+     *
+     * @return array<string, mixed>
+     */
+    private function entryData(LoreEntryRequest $request, LoreEntry $entry): array
+    {
+        $data = Arr::except($request->validated(), ['image', 'remove_image']);
+
+        return [...$data, ...LoreImages::fromRequest($request, $entry->image_path, LoreEntry::imageFolder())];
+    }
+
+    /**
      * What the Vue form needs to carry on editing the saved entry without a page load.
      *
-     * @return array{id: int, action: string, method: string, edit_url: string}
+     * @return array{id: int, action: string, method: string, edit_url: string, image_url: ?string}
      */
     private function savedPayload(LoreEntry $entry): array
     {
@@ -190,6 +205,7 @@ class LoreEntryController extends Controller
             'action' => route('admin.entries.update', $entry),
             'method' => 'PUT',
             'edit_url' => route('admin.entries.edit', $entry),
+            'image_url' => $entry->imageUrl(),
             'extras' => EntryExtras::for($entry),
         ];
     }

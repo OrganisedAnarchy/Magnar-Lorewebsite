@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\LoreEntry;
+use App\Support\LoreImages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class LoreEntryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $subCategory = trim((string) $this->input('sub_category'));
-        $normalized = ['sub_category' => $subCategory === '' ? null : $subCategory];
+        $normalized = ['sub_category' => $subCategory === '' ? null : $subCategory, 'remove_image' => $this->boolean('remove_image')];
 
         foreach (['dob', 'dod'] as $date) {
             $isUnknown = $this->boolean("{$date}_is_unknown");
@@ -42,6 +43,8 @@ class LoreEntryRequest extends FormRequest
             'sub_category' => ['nullable', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', ...LoreImages::FILE_RULES],
+            'remove_image' => ['boolean'],
         ];
 
         foreach ([

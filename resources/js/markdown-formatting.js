@@ -44,6 +44,36 @@ export function renderMarkdown(value) {
     return markdown.render(value);
 }
 
+// Embedded images are written {{https://…/image.png|alt text}}.
+export const IMAGE_EMBED = /\{\{(https?:\/\/[^|{}\s]+)\|([^{}\n]*)\}\}/g;
+
+markdown.inline.ruler.before('image', 'lore_image', (state, silent) => {
+    if (!state.src.startsWith('{{', state.pos)) {
+        return false;
+    }
+    const match = new RegExp(`^${IMAGE_EMBED.source}`).exec(state.src.slice(state.pos, state.posMax));
+    const src = match ? state.md.normalizeLink(match[1]) : '';
+    if (!match || !state.md.validateLink(src)) {
+        return false;
+    }
+
+    if (!silent) {
+        const alt = match[2].trim();
+        const token = state.push('image', 'img', 0);
+        token.attrs = [['src', src], ['alt', '']];
+        token.content = alt;
+        token.children = [Object.assign(new state.Token('text', '', 0), { content: alt })];
+    }
+    state.pos += match[0].length;
+
+    return true;
+});
+
+/** The text to insert for an uploaded image; characters that would break the syntax are stripped from the alt text. */
+export function imageEmbed(url, altText) {
+    return `{{${url}|${altText.replace(/[|{}\r\n]+/g, ' ').replace(/\s+/g, ' ').trim()}}}`;
+}
+
 export function formatSelection(text, from, to, format) {
     const selected = text.slice(from, to);
     const wrappers = {

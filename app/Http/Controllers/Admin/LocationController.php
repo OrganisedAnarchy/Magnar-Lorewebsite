@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LocationRequest;
 use App\Models\Location;
+use App\Support\LoreImages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,13 +70,14 @@ class LocationController extends Controller
         }
 
         $this->deleteMap($location);
+        LoreImages::delete($location->image_path);
         $location->delete();
 
         return $this->respond($request, redirect()->route('admin.locations.index'), 'Location deleted.');
     }
 
     /**
-     * @return array{id: int, action: string, method: string, edit_url: string, map_url: ?string}
+     * @return array{id: int, action: string, method: string, edit_url: string, map_url: ?string, image_url: ?string}
      */
     private function savedPayload(Location $location): array
     {
@@ -85,6 +87,7 @@ class LocationController extends Controller
             'method' => 'PUT',
             'edit_url' => route('admin.locations.edit', $location),
             'map_url' => $location->mapUrl(),
+            'image_url' => $location->imageUrl(),
         ];
     }
 
@@ -137,6 +140,8 @@ class LocationController extends Controller
             $this->deleteMap($location);
             $data['map_image_path'] = null;
         }
+
+        $data = [...$data, ...LoreImages::fromRequest($request, $location->image_path, Location::imageFolder())];
 
         $location->fill($data)->save();
     }

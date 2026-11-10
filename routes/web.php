@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DailyTaskController;
 use App\Http\Controllers\Admin\FamilyMemberController;
+use App\Http\Controllers\Admin\ImageController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\LoreEntryController;
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('entries/search', [LoreEntryController::class, 'search'])->name('entries.search');
     Route::post('entries/check', [LoreEntryController::class, 'check'])->name('entries.check');
     Route::post('entries/resolve', [LoreEntryController::class, 'resolve'])->name('entries.resolve');
+    Route::post('images', [ImageController::class, 'store'])->name('images.store');
     Route::resource('entries', LoreEntryController::class)->except('show');
     Route::resource('languages', LanguageController::class)->except('show');
     Route::resource('books', BookController::class)->except('show');

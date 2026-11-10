@@ -12,6 +12,7 @@
     'searchUrl' => route('admin.entries.search'),
     'resolveUrl' => route('admin.entries.resolve'),
     'checkUrl' => route('admin.entries.check'),
+    'imageUploadUrl' => route('admin.images.store'),
     'categories' => array_merge(
         array_column(\App\Models\LoreEntry::CATEGORIES, 'label'),
         collect(\App\Models\LoreEntry::linkTypes())->pluck('label')->all(),

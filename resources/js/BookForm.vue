@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import MarkdownEditor from './MarkdownEditor.vue';
+import ImageField from './ImageField.vue';
 import DraftBanner from './DraftBanner.vue';
 import DraftStatus from './DraftStatus.vue';
 import { useAjaxSubmit } from './useAjaxSubmit.js';
@@ -13,6 +14,8 @@ const props = defineProps({
     draftKey: { type: String, required: true },
     initial: { type: Object, required: true },
     languageOptions: { type: Array, default: () => [] },
+    currentImageUrl: { type: String, default: null },
+    imageLabel: { type: String, default: 'Image' },
     errors: { type: Object, default: () => ({}) },
     searchUrl: { type: String, required: true },
     cancelUrl: { type: String, required: true },
@@ -30,11 +33,16 @@ const form = reactive({
     ...Object.fromEntries(Object.keys(dateParts).map((part) => [`published_${part}`, props.initial[`published_${part}`] ?? ''])),
 });
 
+const currentImage = ref(props.currentImageUrl);
+
 const { formAction, formMethod, formErrors, saving, submit } = useAjaxSubmit({
     action: props.action,
     method: props.method,
     errors: props.errors,
-    onSaved: (data) => markSaved(data.id),
+    onSaved: (data) => {
+        currentImage.value = data.image_url ?? null;
+        markSaved(data.id);
+    },
 });
 
 const error = (name) => formErrors.value[name]?.[0];
@@ -134,7 +142,7 @@ const closeLanguageList = () => {
 </script>
 
 <template>
-    <form method="POST" class="book-form" :action="formAction" @submit.prevent="submit">
+    <form method="POST" enctype="multipart/form-data" class="book-form" :action="formAction" @submit.prevent="submit">
         <input type="hidden" name="_token" :value="csrf">
         <input v-if="formMethod !== 'POST'" type="hidden" name="_method" :value="formMethod">
 
@@ -144,6 +152,8 @@ const closeLanguageList = () => {
             <label for="title">Title</label>
             <input id="title" v-model="form.title" name="title" required>
             <div v-if="error('title')" class="error">{{ error('title') }}</div>
+
+            <ImageField :label="imageLabel" :current-url="currentImage" :error="error('image')" />
 
             <label for="author_name">Author</label>
             <div class="combo">
@@ -227,11 +237,11 @@ const closeLanguageList = () => {
 
         <section class="panel">
             <label>Summary of contents</label>
-            <MarkdownEditor v-model="form.summary" name="summary" label="Summary of contents" compact />
+            <MarkdownEditor v-model="form.summary" name="summary" label="Summary of contents" :alt-text="form.title" compact />
             <div v-if="error('summary')" class="error">{{ error('summary') }}</div>
 
             <label>Full text <span class="hint">(optional)</span></label>
-            <MarkdownEditor v-model="form.content" name="content" label="Full text" />
+            <MarkdownEditor v-model="form.content" name="content" label="Full text" :alt-text="form.title" />
             <div v-if="error('content')" class="error">{{ error('content') }}</div>
         </section>
 

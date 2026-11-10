@@ -20,13 +20,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'published_year',
     'published_is_circa',
     'published_is_unknown',
+    'image_path',
 ])]
 class Book extends Model
 {
     /** @use HasFactory<BookFactory> */
     use HasFactory;
 
+    use HasLoreImage;
+
     public const DEFAULT_LANGUAGE = 'Common';
+
+    public function imageLabel(): string
+    {
+        return 'Cover';
+    }
 
     /**
      * @return array<string, string>

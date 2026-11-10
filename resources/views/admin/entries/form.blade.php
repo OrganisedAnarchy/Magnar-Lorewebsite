@@ -25,6 +25,8 @@
         'subCategories' => \App\Models\SubCategory::grouped(),
         'linkStatuses' => $linkStatuses,
         'uncategorized' => $entry->exists && ! $entry->category,
+        'imageLabels' => \App\Models\LoreEntry::IMAGE_LABELS,
+        'currentImageUrl' => $entry->imageUrl(),
     ]) }}"></div>
     <div id="entry-extras-app" data-props="{{ json_encode(['initial' => $entry->exists ? \App\Support\EntryExtras::for($entry) : ['category' => null, 'family' => null, 'organisation' => null]]) }}"></div>
 @endsection
