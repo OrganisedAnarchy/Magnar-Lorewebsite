@@ -26,6 +26,12 @@
             e.g. hovering over fire would show the original word in the source language.
             - Publish Date for each in world book translation.
             - Which fantasy language a book is available in.
+    - Locations
+        - Implement a Location Pinning System
+        - Add a map overlay system for displaying political boundaries and regions.
+        - Implement a system for marking locations of interest on the map.
+        - Allow players to filter locations based on categories or tags.
+        - Implement a system for linking locations to lore subjects.
 - Backend Systems
     - Implement the player character management system
         - Backstory Management

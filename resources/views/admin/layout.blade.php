@@ -114,10 +114,11 @@
     <header>
         <strong>Admin</strong>
         <a href="{{ route('admin.entries.index') }}">Lore</a>
-                <a href="{{ route('admin.languages.index') }}">Languages</a>
-                <a href="{{ route('admin.books.index') }}">Books</a>
-                <a href="{{ route('admin.locations.index') }}">Locations</a>
-                <span class="spacer"></span>
+        <a href="{{ route('admin.daily-tasks.index') }}">Daily Tasks</a>
+        <a href="{{ route('admin.languages.index') }}">Languages</a>
+        <a href="{{ route('admin.books.index') }}">Books</a>
+        <a href="{{ route('admin.locations.index') }}">Locations</a>
+        <span class="spacer"></span>
         <a href="{{ route('home') }}">View site</a>
         <form class="inline" method="POST" action="{{ route('logout') }}">
             @csrf

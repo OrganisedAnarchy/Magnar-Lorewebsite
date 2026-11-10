@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BookController;
+use App\Http\Controllers\Admin\DailyTaskController;
 use App\Http\Controllers\Admin\FamilyMemberController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LocationController;
@@ -28,6 +29,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::redirect('/', '/admin/entries')->name('index');
+    Route::get('daily-tasks', [DailyTaskController::class, 'index'])->name('daily-tasks.index');
     Route::get('entries/search', [LoreEntryController::class, 'search'])->name('entries.search');
     Route::post('entries/check', [LoreEntryController::class, 'check'])->name('entries.check');
     Route::post('entries/resolve', [LoreEntryController::class, 'resolve'])->name('entries.resolve');
