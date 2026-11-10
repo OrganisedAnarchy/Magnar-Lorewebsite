@@ -40,6 +40,29 @@ class LocationMapTest extends TestCase
         Storage::disk('public')->assertExists($location->map_image_path);
     }
 
+    public function test_maps_are_stored_on_and_served_from_the_configured_images_disk(): void
+    {
+        config(['filesystems.images_disk' => 's3']);
+        Storage::fake('s3');
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.locations.store'), [
+                'name' => 'Lomile',
+                'map' => UploadedFile::fake()->image('lomile.png', 400, 300),
+            ])
+            ->assertRedirect(route('admin.locations.index'));
+
+        $location = Location::where('name', 'Lomile')->firstOrFail();
+        Storage::disk('s3')->assertExists($location->map_image_path);
+        Storage::disk('public')->assertMissing($location->map_image_path);
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.locations.update', $location), ['name' => 'Lomile', 'remove_map' => 1])
+            ->assertSessionHasNoErrors();
+
+        Storage::disk('s3')->assertMissing($location->map_image_path);
+    }
+
     public function test_places_lore_entries_are_moved_to_locations(): void
     {
         $oldPlaceId = DB::table('lore_entries')->insertGetId([

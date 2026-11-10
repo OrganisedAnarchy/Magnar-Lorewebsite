@@ -8,7 +8,6 @@ use App\Models\Location;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class LocationController extends Controller
@@ -133,7 +132,7 @@ class LocationController extends Controller
 
         if ($request->hasFile('map')) {
             $this->deleteMap($location);
-            $data['map_image_path'] = $request->file('map')->store('maps', 'public');
+            $data['map_image_path'] = $request->file('map')->store('maps', config('filesystems.images_disk'));
         } elseif ($request->boolean('remove_map')) {
             $this->deleteMap($location);
             $data['map_image_path'] = null;
@@ -145,7 +144,7 @@ class LocationController extends Controller
     private function deleteMap(Location $location): void
     {
         if ($location->hasMap()) {
-            Storage::disk('public')->delete($location->map_image_path);
+            Location::imageDisk()->delete($location->map_image_path);
         }
     }
 }

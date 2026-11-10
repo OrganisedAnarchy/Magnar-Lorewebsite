@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\LocationFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -104,9 +105,23 @@ class Location extends Model
         return filled($this->map_image_path);
     }
 
+    public static function imageDisk(): Filesystem
+    {
+        return Storage::disk(config('filesystems.images_disk'));
+    }
+
     public function mapUrl(): ?string
     {
-        return $this->hasMap() ? Storage::disk('public')->url($this->map_image_path) : null;
+        if (! $this->hasMap()) {
+            return null;
+        }
+
+        $disk = static::imageDisk();
+
+        // S3 buckets are private by default, so serve maps through short-lived signed URLs.
+        return config('filesystems.disks.'.config('filesystems.images_disk').'.driver') === 's3'
+            ? $disk->temporaryUrl($this->map_image_path, now()->addHour())
+            : $disk->url($this->map_image_path);
     }
 
     /**
