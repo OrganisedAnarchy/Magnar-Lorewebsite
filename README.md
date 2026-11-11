@@ -1,6 +1,6 @@
 # The World of Magnar
 
-![Version](https://img.shields.io/badge/version-0.2-blue)
+![Version](https://img.shields.io/badge/version-0.3-blue)
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white)
@@ -10,7 +10,7 @@ setting. It combines a public-facing world guide (an animated celestial system
 and an interactive map) with an admin-only authoring suite for lore entries,
 constructed languages, books and locations.
 
-**Current version: 0.2**
+**Current version: 0.3**
 
 ## Highlights
 
@@ -37,6 +37,10 @@ constructed languages, books and locations.
   summaries and full text.
 - **Interactive map.** Locations can carry an uploaded map image and contain child
   locations pinned on their parent's map, browsed through a JSON-backed Vue viewer.
+- **AWS S3 image storage.** Uploaded imagery (such as location maps) is stored on
+  a configurable disk, which can be switched to an AWS S3 bucket. Images in S3
+  are shown in the admin through short-lived signed URLs, and replaced or
+  removed images are deleted from the bucket.
 - **Celestial system.** An animated diagram of Magnar's three moons, two suns and
   five neighbouring planets. Magnar's 780-day year is two 390-day cycles of
   thirteen 30-day months.
@@ -51,6 +55,7 @@ constructed languages, books and locations.
 | Frontend | Vue 3 (Composition API, `<script setup>`), SCSS, CodeMirror 6 |
 | Build tooling | Vite 8, `laravel-vite-plugin`, `@vitejs/plugin-vue`, Sass |
 | Database | MySQL 8.4 (SQLite supported for local testing) |
+| Storage | Local public disk or AWS S3 (`league/flysystem-aws-s3-v3`) for uploaded images |
 | Infrastructure | Docker, Docker Compose, Apache, multi-stage image build (Node 24 + PHP 8.4) |
 | Testing & quality | PHPUnit 12, Laravel Pint |
 | Tooling | Laravel Boost, Laravel Pail, Laravel Tinker |
@@ -119,6 +124,24 @@ configured database. Registration requires a name, unique email address, and
 confirmed password of at least eight characters. The admin area at `/admin`
 requires an account with the `is_admin` flag set.
 
+## Image storage (AWS S3)
+
+Uploaded images are written to the disk named by `IMAGES_DISK` in `.env`. It
+defaults to `public` (local storage). To store images in AWS S3, set:
+
+```dotenv
+IMAGES_DISK=s3
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket-name
+```
+
+Optional settings for S3-compatible services are `AWS_URL`, `AWS_ENDPOINT` and
+`AWS_USE_PATH_STYLE_ENDPOINT`. Buckets can stay private: the admin displays
+images using temporary signed URLs. Uploads accept JPG, PNG, WebP and GIF files
+up to 10 MB.
+
 ## Testing and formatting
 
 ```sh
@@ -139,4 +162,5 @@ This project follows a simple `MAJOR.MINOR` scheme.
 
 | Version | Summary |
 | --- | --- |
+| 0.3 | AWS S3 support for uploaded images, with a configurable images disk and signed URLs for private buckets. |
 | 0.2 | Vue-based forms for all lore categories, languages, books and locations with reactive draft autosave; locations and interactive map; family trees; organisation members and ranks; language tools. |
